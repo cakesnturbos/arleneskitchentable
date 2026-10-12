@@ -1,5 +1,26 @@
 [
   {
+    "id": "mv5vjqb1-f0a9956a",
+    "title": "Fudge balls",
+    "by": "Jennifer",
+    "where": "Akron",
+    "year": 2020,
+    "ingredients": [
+      "3 cups powdered sugar",
+      "2/3 cup cocoa powder",
+      "1/4 teaspoon of salt",
+      "1 tablespoon of vanilla",
+      "1 tablespoon of water"
+    ],
+    "method": "Ball up, dip and chocolate",
+    "cats": [
+      "cookies"
+    ],
+    "manual": false,
+    "image": "images/mv5vjqb1-f0a9956a.jpg",
+    "approved": "2026-10-12T23:40:29.031Z"
+  },
+  {
     "id": "mv5us2aw-2aa948d6",
     "title": "test card",
     "by": "",
