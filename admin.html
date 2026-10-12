@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Admin - Arlene's Kitchen Table</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bevan&family=Figtree:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#F1E8D2; --surface:#FFFBF0; --ink:#2B2118; --muted:#6B5B4B; --line:#D6C7A4;
+  --accent:#A5332A; --accent-ink:#FFFFFF; --soft:#EBDCB8; --ok:#2F6B3A; --ok-ink:#FFFFFF;
+  --display:'Bevan',Georgia,serif; --body:'Figtree',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#1F1914; --surface:#2B231C; --ink:#F1E6D2; --muted:#B9A78F; --line:#443830;
+  --accent:#E8907F; --accent-ink:#2A140F; --soft:#3B2F25; --ok:#7CCB8A; --ok-ink:#10230F; color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 var(--body);padding-inline:16px}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+[hidden]{display:none!important}
+.wrap{max-width:980px;margin-inline:auto;padding-block:20px 56px}
+header{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between;margin-bottom:20px;padding-bottom:14px;border-bottom:2px solid var(--accent)}
+h1{font:400 26px/1.15 var(--display);margin:0}
+header small{color:var(--muted)}
+.btn{border:1px solid var(--line);background:var(--surface);padding:8px 16px;border-radius:8px;font-weight:500}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.ok{background:var(--ok);color:var(--ok-ink);border-color:var(--ok)}
+.btn.danger{border-color:var(--accent);color:var(--accent)}
+.btn:disabled{opacity:.5;cursor:wait}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.tab{border:1px solid var(--line);background:var(--surface);padding:6px 14px;border-radius:99px}
+.tab[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tab b{font-variant-numeric:tabular-nums}
+.card{display:grid;grid-template-columns:minmax(0,280px) minmax(0,1fr);gap:20px;margin-bottom:20px}
+.card .pic img{display:block;width:100%;border-radius:4px;border:1px solid var(--line)}
+.card .pic .none{background:var(--soft);border-radius:4px;padding:18px;color:var(--muted);font-size:14.5px}
+.fields{display:flex;flex-direction:column;gap:12px;min-width:0}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+label{font-weight:600;font-size:14px;display:block;margin-bottom:3px}
+input[type=text],input[type=number],input[type=email],textarea{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+textarea{min-height:96px;resize:vertical;line-height:1.45}
+.cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:4px 14px}
+.cats label{font-weight:400;display:flex;gap:6px;align-items:center;margin:0;font-size:14.5px}
+.meta{font-size:13.5px;color:var(--muted)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.msg{margin:0 0 14px;padding:10px 14px;border-radius:8px;background:var(--soft)}
+.msg.err{border:1px solid var(--accent)}
+.empty{color:var(--muted);padding:32px 0}
+code{background:var(--soft);padding:1px 6px;border-radius:4px;font-size:.92em}
+@media (max-width:700px){.card{grid-template-columns:minmax(0,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div><h1>Arlene's Kitchen Table</h1><small>Admin: approve cards before anyone else sees them</small></div>
+    <div class="row" id="who" hidden><span class="meta" id="whoEmail"></span><button class="btn" id="out">Sign out</button></div>
+  </header>
+  <div id="note" class="msg" hidden role="status"></div>
+  <main id="app"></main>
+</div>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+const TREE=[
+ ['Meals',[['breakfast','Breakfast'],['lunch','Lunch'],['dinner','Dinner']]],
+ ['Dessert',[['cakes','Cakes'],['cookies','Cookies & Bars'],['pies','Pies & Pastries'],['puddings','Puddings & Custards']]],
+ ['Breads',[['breads','Breads']]],
+ ['Holiday',[['thanksgiving','Thanksgiving'],['christmas','Christmas']]],
+ ['Ethnic',[['german','German'],['italian','Italian'],['mexican','Mexican'],['polish','Polish']]]
+];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const cfg=window.AKT_CONFIG||{};
+const app=$('#app');
+let sb=null,user=null,rows=[],tab='pending',confirming=null;
+
+function note(t,err){const n=$('#note');n.textContent=t;n.className='msg'+(err?' err':'');n.hidden=!t}
+
+function setupMissing(){
+  app.innerHTML=`<div class="box"><p><b>The admin page is not connected yet.</b></p>
+  <p>Open <code>config.js</code> in the repo and put in your Supabase project URL and public ("anon") key. Then reload this page.</p></div>`;
+}
+function renderLogin(msg){
+  $('#who').hidden=true;
+  app.innerHTML=`<div class="box" style="max-width:460px"><h2 style="margin-top:0;font-size:20px">Sign in</h2>
+  <p class="meta">Enter your email and we will send you a sign-in link. No password.</p>
+  <form id="login"><label for="em">Email</label><input type="email" id="em" autocomplete="email" required>
+  <div class="row" style="margin-top:12px"><button class="btn primary" type="submit">Send me a link</button></div></form>
+  ${msg?`<p class="msg" style="margin-top:14px">${esc(msg)}</p>`:''}</div>`;
+  $('#login').onsubmit=async e=>{
+    e.preventDefault();const email=$('#em').value.trim();
+    const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+location.pathname}});
+    renderLogin(error?'Could not send the link: '+error.message:'Check your email and click the link. You can close this tab.');
+  };
+}
+function renderNotAdmin(){
+  $('#who').hidden=false;$('#whoEmail').textContent=user.email;
+  app.innerHTML=`<div class="box"><p><b>You are signed in, but this account is not an admin yet.</b></p>
+  <p>In Supabase, open the SQL Editor and run:</p>
+  <p><code>insert into public.admins (user_id) select id from auth.users where email = '${esc(user.email)}';</code></p>
+  <p>Then reload this page.</p></div>`;
+}
+
+async function load(){
+  const {data,error}=await sb.from('recipes').select('*').order('created_at',{ascending:false});
+  if(error){note('Could not load cards: '+error.message,true);rows=[];return}
+  rows=data;
+}
+const imgUrl=p=>sb.storage.from('cards').getPublicUrl(p).data.publicUrl;
+const count=s=>rows.filter(r=>r.status===s).length;
+
+function cardHTML(r){
+  const pic=r.image_path?`<img src="${esc(imgUrl(r.image_path))}" alt="Photo of the card for ${esc(r.title)}" loading="lazy">`
+    :`<div class="none">Typed in with no photo.</div>`;
+  const cats=TREE.map(([g,kids])=>kids.map(([id,l])=>`<label><input type="checkbox" name="cat" value="${id}" ${r.cats.includes(id)?'checked':''}> ${esc(g===l?l:g+': '+l)}</label>`).join('')).join('');
+  const when=new Date(r.created_at).toLocaleString();
+  let actions;
+  if(r.status==='pending')actions=`<button class="btn ok" data-act="approve">Approve</button><button class="btn" data-act="save">Save edits</button><button class="btn danger" data-act="reject">Reject</button>`;
+  else if(r.status==='approved')actions=`<button class="btn" data-act="save">Save edits</button><button class="btn" data-act="unpublish">Unpublish</button>`;
+  else actions=`<button class="btn" data-act="restore">Move back to pending</button>`+(confirming===r.id?`<button class="btn danger" data-act="delete">Yes, delete forever</button><button class="btn" data-act="cancel">Keep it</button>`:`<button class="btn danger" data-act="ask">Delete forever</button>`);
+  return `<article class="box card" data-card="${r.id}"><div class="pic">${pic}</div><div class="fields">
+    <div><label>Name of the recipe</label><input type="text" name="title" value="${esc(r.title)}"></div>
+    <div class="two"><div><label>Whose</label><input type="text" name="cook" value="${esc(r.cook)}"></div>
+      <div><label>Where</label><input type="text" name="place" value="${esc(r.place)}"></div>
+      <div><label>Year</label><input type="number" name="year" value="${esc(r.year)}"></div></div>
+    <div><label>Ingredients, one per line</label><textarea name="ingredients">${esc((r.ingredients||[]).join('\n'))}</textarea></div>
+    <div><label>Method</label><textarea name="method">${esc(r.method)}</textarea></div>
+    <div><label>Categories</label><div class="cats">${cats}</div></div>
+    <p class="meta">Submitted ${esc(when)}${r.contact?' &middot; contact: '+esc(r.contact):''}</p>
+    <div class="row">${actions}</div></div></article>`;
+}
+function render(){
+  $('#who').hidden=false;$('#whoEmail').textContent=user.email;
+  const tabs=[['pending','Waiting for approval'],['approved','Approved'],['rejected','Rejected']]
+    .map(([k,l])=>`<button class="tab" data-tab="${k}" aria-pressed="${tab===k}">${l} <b>${count(k)}</b></button>`).join('');
+  const list=rows.filter(r=>r.status===tab);
+  app.innerHTML=`<div class="tabs">${tabs}<button class="tab" data-act="refresh">Refresh</button></div>`+
+    (list.length?list.map(cardHTML).join(''):`<p class="empty">${tab==='pending'?'Nothing waiting. New cards will show up here.':'Nothing here yet.'}</p>`);
+}
+
+function collect(el){
+  const v=n=>el.querySelector(`[name=${n}]`).value.trim();
+  return {title:v('title'),cook:v('cook')||null,place:v('place')||null,year:+v('year')||null,
+    ingredients:v('ingredients').split('\n').map(s=>s.trim()).filter(Boolean),method:v('method')||null,
+    cats:[...el.querySelectorAll('[name=cat]:checked')].map(x=>x.value)};
+}
+async function update(id,extra,okMsg,needsCats){
+  const el=document.querySelector(`[data-card="${id}"]`);const upd={...collect(el),...extra};
+  if(!upd.title){note('Give the recipe a name first.',true);return}
+  if(needsCats&&!upd.cats.length){note('Pick at least one category before approving.',true);return}
+  el.querySelectorAll('button').forEach(b=>b.disabled=true);
+  const {error}=await sb.from('recipes').update(upd).eq('id',id);
+  if(error){note('Could not save: '+error.message,true);el.querySelectorAll('button').forEach(b=>b.disabled=false);return}
+  note(okMsg);await load();render();
+}
+async function destroy(id){
+  const r=rows.find(x=>x.id===id);
+  if(r.image_path)await sb.storage.from('cards').remove([r.image_path]);
+  const {error}=await sb.from('recipes').delete().eq('id',id);
+  confirming=null;
+  if(error){note('Could not delete: '+error.message,true);return}
+  note('Deleted.');await load();render();
+}
+
+document.addEventListener('click',async e=>{
+  const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.tab){tab=b.dataset.tab;confirming=null;note('');render();return}
+  if(b.id==='out'){await sb.auth.signOut();return}
+  const a=b.dataset.act;if(!a)return;
+  if(a==='refresh'){await load();render();note('Refreshed.');return}
+  const id=b.closest('[data-card]')?.dataset.card;if(!id)return;
+  if(a==='approve')update(id,{status:'approved'},'Approved. It is now visible on the site.',true);
+  else if(a==='save')update(id,{},'Saved.',tab==='approved');
+  else if(a==='reject')update(id,{status:'rejected'},'Rejected. It stays hidden.');
+  else if(a==='unpublish')update(id,{status:'pending'},'Moved back to waiting. It is hidden again.');
+  else if(a==='restore')update(id,{status:'pending'},'Moved back to waiting.');
+  else if(a==='ask'){confirming=id;render()}
+  else if(a==='cancel'){confirming=null;render()}
+  else if(a==='delete')destroy(id);
+});
+
+async function boot(){
+  note('');
+  if(!user)return renderLogin();
+  const {data,error}=await sb.from('admins').select('user_id').eq('user_id',user.id);
+  if(error){note('Could not check admin access: '+error.message,true);return}
+  if(!data.length)return renderNotAdmin();
+  await load();render();
+}
+(async()=>{
+  if(!cfg.url||!cfg.anonKey||cfg.url.startsWith('YOUR_')){setupMissing();return}
+  sb=supabase.createClient(cfg.url,cfg.anonKey);
+  const {data:{session}}=await sb.auth.getSession();user=session?.user||null;
+  sb.auth.onAuthStateChange((_ev,s)=>{const next=s?.user||null;if((next?.id)!==(user?.id)){user=next;boot()}});
+  boot();
+})();
+</script>
+</body>
+</html>
