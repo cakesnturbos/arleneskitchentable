@@ -143,7 +143,10 @@ async function getRecipes(){
   if(!m.ok)await fail(m,'Could not read the published recipes');
   const meta=await m.json();
   const raw=await api(pub('data/recipes.json'),{raw:true});
-  return {list:JSON.parse(await raw.text()||'[]'),sha:meta.sha};
+  if(!raw.ok)await fail(raw,'Could not read the published recipes');
+  const list=JSON.parse((await raw.text()).trim()||'[]');
+  if(!Array.isArray(list))throw new Error('data/recipes.json is not a list of recipes.');
+  return {list,sha:meta.sha};
 }
 async function putRecipes(list,sha,message){
   const body={message,content:enc(JSON.stringify(list,null,2)+'\n')};if(sha)body.sha=sha;
