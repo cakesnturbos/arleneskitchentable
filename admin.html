@@ -86,7 +86,7 @@ function note(t,err){const n=$('#note');n.textContent=t;n.className='msg'+(err?'
 try{token=localStorage.getItem(KEY)||''}catch(e){}
 
 /* ---- GitHub helpers ---- */
-const api=(path,o={})=>fetch('https://api.github.com'+path,{...o,headers:{
+const api=(path,o={})=>fetch('https://api.github.com'+path,{...o,cache:'no-store',headers:{
   Authorization:'Bearer '+token,Accept:o.raw?'application/vnd.github.raw+json':'application/vnd.github+json',
   'X-GitHub-Api-Version':'2022-11-28',...(o.headers||{})}});
 const inbox=p=>`/repos/${cfg.owner}/${cfg.inboxRepo}/contents/${p}`;
@@ -144,8 +144,9 @@ async function getRecipes(){
   const meta=await m.json();
   const raw=await api(pub('data/recipes.json'),{raw:true});
   if(!raw.ok)await fail(raw,'Could not read the published recipes');
-  const list=JSON.parse((await raw.text()).trim()||'[]');
-  if(!Array.isArray(list))throw new Error('data/recipes.json is not a list of recipes.');
+  const txt=(await raw.text()).trim();
+  let list;try{list=JSON.parse(txt||'[]')}catch(e){list=null}
+  if(!Array.isArray(list))throw new Error('data/recipes.json is not a list of recipes. GitHub sent: '+txt.slice(0,200));
   return {list,sha:meta.sha};
 }
 async function putRecipes(list,sha,message){
