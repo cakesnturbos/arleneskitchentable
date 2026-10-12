@@ -1,0 +1,459 @@
+<title>Arlene's Kitchen Table</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@500&family=Covered+By+Your+Grace&family=Figtree:wght@400;500;600&family=Nothing+You+Could+Do&family=Reenie+Beanie&family=Shadows+Into+Light&family=Special+Elite&family=Bevan&display=swap">
+<style>
+/* Layout: sticky top bar, category tree on the left, masonry of cards on the right. A card opens into the original on the left and a tools panel (Interpret, Print) on the right. */
+:root{
+  --bg:#F1E8D2; --surface:#FFFBF0; --ink:#2B2118; --muted:#6B5B4B; --line:#D6C7A4;
+  --accent:#A5332A; --accent-ink:#FFFFFF; --soft:#EBDCB8; --mark:#FFE9A8; --mark-ink:#4A3300;
+  --paper-ink:#222222; --linen:rgba(120,90,40,.06);
+  --display:'Bevan',Georgia,serif; --body:'Figtree',system-ui,sans-serif; --typed:'Special Elite','Courier New',monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#1F1914; --surface:#2B231C; --ink:#F1E6D2; --muted:#B9A78F; --line:#443830;
+  --accent:#E8907F; --accent-ink:#2A140F; --soft:#3B2F25; --linen:rgba(255,230,180,.04); --mark:#6B5710; --mark-ink:#FFF1C4; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#1F1914; --surface:#2B231C; --ink:#F1E6D2; --muted:#B9A78F; --line:#443830;
+  --accent:#E8907F; --accent-ink:#2A140F; --soft:#3B2F25; --linen:rgba(255,230,180,.04); --mark:#6B5710; --mark-ink:#FFF1C4; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg) repeating-linear-gradient(0deg,var(--linen) 0 1px,transparent 1px 4px),repeating-linear-gradient(90deg,var(--linen) 0 1px,transparent 1px 4px);color:var(--ink);font:400 16px/1.5 var(--body);padding-inline:16px}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1180px;margin-inline:auto}
+
+/* top bar */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:12px 20px;margin-inline:-16px;padding-inline:16px}
+.top::after{content:"";position:absolute;left:0;right:0;bottom:0;height:12px;border-top:2px solid var(--accent);
+  background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 45%,transparent) 50%,transparent 50%) 0 0/12px 12px,linear-gradient(color-mix(in srgb,var(--accent) 45%,transparent) 50%,transparent 50%) 0 0/12px 12px,var(--surface)}
+.top .wrap{display:flex;gap:12px 20px;align-items:center;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;border:0;background:none;padding:0;text-align:left}
+.brand .sq{width:40px;height:40px;flex:none;color:var(--accent)}
+.brand .bt{display:flex;flex-direction:column}
+.brand b{font:400 24px/1.1 var(--display)}
+.brand .bt span{font-size:14px;color:var(--muted)}
+.foot{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start}
+.foot>div{flex:1 1 280px;min-width:0}
+.foot .says{font:500 24px/1.2 'Caveat',cursive;color:var(--accent);margin-bottom:6px}
+.polaroid{margin:0 0 0 auto;flex:none;width:128px;background:#fff;color:#555;padding:8px 8px 4px;transform:rotate(2.5deg);box-shadow:0 2px 8px rgba(0,0,0,.28);text-align:center;font:500 17px/1.4 'Caveat',cursive}
+.polaroid img,.polaroid .ph{display:block;width:100%;aspect-ratio:1;object-fit:cover}
+.polaroid .ph{background:#E9E2CF;display:grid;place-items:center;font:400 12px/1.3 var(--body);color:#7a735f;padding:8px}
+.item{position:relative}
+.item .cardwrap{position:relative;z-index:1}
+.peek{position:absolute;top:-22px;right:12px;width:40px;height:40px;color:var(--accent);z-index:0}
+.empty{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+.empty .sq{width:56px;height:56px;color:var(--accent)}
+.foot .sq{width:32px;height:32px;flex:none;color:var(--accent)}
+.foot p{margin:0}.foot p+p{margin-top:4px}
+.search{flex:1 1 220px;min-width:0}
+.search input{width:100%;padding:10px 14px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.btn{border:1px solid var(--line);background:var(--surface);padding:9px 16px;border-radius:8px;font-weight:500}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.browse{display:none}
+
+.shell{display:grid;grid-template-columns:230px minmax(0,1fr);gap:32px;padding-block:24px 56px}
+
+/* tree */
+.tree{position:sticky;top:96px;align-self:start;font-size:15px;background:var(--surface);border:1px solid var(--line);border-top:5px solid var(--accent);border-radius:4px 4px 10px 10px;padding:14px 12px 16px}
+.tree h2{font:400 15px/1.2 var(--display);color:var(--accent);margin:0 0 10px 10px}
+.tn{display:flex;justify-content:space-between;gap:8px;width:100%;text-align:left;border:0;background:none;padding:6px 10px;border-radius:6px}
+.tn b{font-weight:500;color:var(--muted);font-variant-numeric:tabular-nums}
+.tn:hover{background:var(--soft)}
+.tn.on{background:var(--accent);color:var(--accent-ink)}
+.tn.on b{color:inherit}
+.tn.grp{font-weight:600;margin-top:8px}
+.kids{margin:0 0 0 14px;padding-left:6px;border-left:2px solid var(--line)}
+.tn.zero{opacity:.55}
+
+/* browse */
+.head{display:flex;justify-content:space-between;align-items:baseline;gap:8px 16px;flex-wrap:wrap;margin-bottom:12px}
+.head h1{font:400 28px/1.2 var(--display);margin:0}
+.head p{margin:0;color:var(--muted)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.chip{border:1px solid var(--line);background:var(--surface);padding:5px 12px;border-radius:99px;font-size:14px}
+.chip[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.grid{columns:210px;column-gap:20px}
+.item{break-inside:avoid;margin:0 0 22px;display:block;width:100%;text-align:left;border:0;background:none;padding:0}
+.item .cap{padding:8px 2px 0}
+.item .cap b{display:block;font-weight:600;line-height:1.3}
+.item .cap span{font-size:13.5px;color:var(--muted)}
+.item:hover .cardwrap{transform:translateY(-3px)}
+.cardwrap{filter:drop-shadow(0 1px 2px rgba(0,0,0,.2)) drop-shadow(0 7px 10px rgba(0,0,0,.12));transition:transform .15s}
+.tag{display:inline-block;font-size:12px;border:1px solid var(--line);border-radius:4px;padding:0 6px;margin-top:4px;color:var(--muted)}
+.empty{padding:48px 0;color:var(--muted)}
+
+/* paper cards (the "scans") */
+.paper{container-type:inline-size;position:relative;width:100%;background:#FBF3DC}
+.paper .sheet{position:absolute;inset:0;overflow:hidden;color:var(--ink-card,#222)}
+.paper.index{aspect-ratio:5/3.3}
+.paper.notebook{aspect-ratio:3/4}
+.paper.scrap{aspect-ratio:4/4.4}
+.ln{display:flex;align-items:flex-end;white-space:nowrap;height:6.2cqw;padding-bottom:.5cqw;font-size:calc(5.3cqw*var(--fs,1));line-height:1}
+.ln small{font-size:.75em;margin-left:.4em}
+.ln.t{font-size:calc(7cqw*var(--fs,1))}
+.index .sheet{padding:2.4cqw 4cqw 0 6cqw;
+  background:linear-gradient(#DE9A9A,#DE9A9A) 0 8.3cqw/100% .3cqw no-repeat,
+  repeating-linear-gradient(to bottom,transparent 0 5.9cqw,#B9CFE4 5.9cqw 6.2cqw) 0 8.6cqw/100% 100% no-repeat}
+.index .ln.t{height:6.2cqw}
+.notebook{background:#FDFDF8}
+.notebook .sheet{padding:3.2cqw 3cqw 0 16cqw;
+  background:linear-gradient(#E4A0A0,#E4A0A0) 12cqw 0/.3cqw 100% no-repeat,
+  repeating-linear-gradient(to bottom,transparent 0 6.05cqw,#BCD2E6 6.05cqw 6.4cqw) 0 3.2cqw/100% 100% no-repeat,
+  radial-gradient(circle at 4cqw 20cqw,#CFCFC6 0 1.6cqw,transparent 1.7cqw),
+  radial-gradient(circle at 4cqw 66cqw,#CFCFC6 0 1.6cqw,transparent 1.7cqw),
+  radial-gradient(circle at 4cqw 112cqw,#CFCFC6 0 1.6cqw,transparent 1.7cqw)}
+.notebook .ln{height:6.4cqw}
+.scrap{background:linear-gradient(160deg,#F3E4BD,#E8D3A2);clip-path:polygon(0 .8%,8% 0,19% 1%,33% .2%,47% 1%,62% 0,78% .9%,91% .1%,100% .8%,100% 100%,0 100%)}
+.scrap .sheet{padding:7cqw 6cqw 0 8cqw;box-shadow:inset 0 0 9cqw rgba(140,90,30,.28)}
+.scrap .ln{height:6.8cqw}
+.stain .sheet::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(circle at 80% 74%,transparent 0 8.5cqw,rgba(120,70,20,.2) 9cqw 9.6cqw,rgba(120,70,20,.08) 10cqw,transparent 12cqw)}
+.paper.upload{background:none}
+.paper.upload img{display:block;width:100%;height:auto}
+
+/* detail */
+.back{border:0;background:none;color:var(--accent);padding:0;margin-bottom:14px;font-weight:500}
+.detail{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(300px,.95fr);gap:36px;align-items:start}
+.detail .orig{max-width:640px}
+.detail .note{font-size:13.5px;color:var(--muted);margin:12px 0 0}
+.side{display:flex;flex-direction:column;gap:20px;min-width:0}
+.side h1{font:400 30px/1.15 var(--display);margin:0;text-wrap:balance}
+.meta{color:var(--muted);margin:4px 0 0}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px}
+.box h2{font:600 12px/1 var(--body);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.hint{font-size:14px;color:var(--muted);margin:10px 0 0}
+.typed{background:#fff;color:var(--paper-ink);font-family:var(--typed);font-size:15px;line-height:1.55;padding:20px 22px;border-radius:4px;border:1px solid #d8d8d0}
+.typed h3{font:400 22px/1.2 var(--typed);margin:0 0 2px}
+.typed .by{font-size:13px;color:#666;margin:0 0 12px}
+.typed h4{font:400 13px/1 var(--typed);letter-spacing:.1em;text-transform:uppercase;margin:14px 0 6px;color:#444}
+.typed ul,.typed ol{margin:0;padding-left:20px}
+.typed p{margin:0}
+.typed mark{background:var(--mark);color:var(--mark-ink);border-bottom:2px dotted currentColor;padding:0 1px;border-radius:2px}
+.typed .none{color:#777;font-style:italic}
+.typed .sug{margin-top:14px;border:1.5px dashed #999;border-radius:4px;padding:10px 12px;background:#fafaf5}
+.typed .sug h4{margin-top:0}
+.legend{font-size:13.5px;color:var(--muted);margin:10px 0 0}
+.legend mark{background:var(--mark);color:var(--mark-ink);padding:0 4px;border-radius:2px}
+.reading{display:flex;gap:10px;align-items:center;color:var(--muted)}
+.dots{display:inline-flex;gap:4px}.dots i{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:b 1s infinite}
+.dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}
+@keyframes b{0%,80%,100%{opacity:.25}40%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.dots i{animation:none}.cardwrap{transition:none}}
+label.chk{display:flex;gap:8px;align-items:flex-start;font-size:14.5px}
+label.chk input{margin-top:4px}
+
+/* print preview */
+.modal{position:fixed;inset:0;z-index:20;background:rgba(10,16,14,.62);display:flex;justify-content:center;align-items:flex-start;overflow:auto;padding:max(16px,env(safe-area-inset-top,0px)) 16px 24px}
+.modal[hidden]{display:none}
+.mbox{background:var(--surface);border-radius:12px;width:min(720px,100%);padding:18px}
+.mbox header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.mbox h2{font:400 22px/1.2 var(--display);margin:0}
+.sheetpage{background:#fff;color:var(--paper-ink);aspect-ratio:8.5/11;max-width:100%;padding:6%;display:flex;flex-direction:column;gap:5%;box-shadow:0 0 0 1px var(--line),0 8px 24px rgba(0,0,0,.25);overflow:hidden}
+.sheetpage .typed{border:0;padding:0;font-size:clamp(11px,1.9vw,15px)}
+.sheetpage .paper{max-width:100%}
+.sheetpage.both .paper{max-width:62%;margin-inline:auto}
+
+/* add card */
+.form{max-width:720px;display:flex;flex-direction:column;gap:18px}
+.form h1{font:400 28px/1.2 var(--display);margin:0}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label,.field legend{font-weight:600;font-size:14.5px}
+.field textarea{resize:vertical;min-height:110px;line-height:1.45}
+.field input[type=text],.field input[type=number],.field textarea{padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);width:100%}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.drop{border:2px dashed var(--line);border-radius:10px;padding:22px;text-align:center;background:var(--surface);color:var(--muted)}
+.drop .cw{position:relative;display:inline-block;max-width:100%;margin:0 auto 12px;line-height:0;overflow:hidden;border-radius:4px;touch-action:none;user-select:none}
+.drop .cw img{display:block;max-width:100%;max-height:340px;margin:0}
+.cbox{position:absolute;border:2px solid var(--accent);box-shadow:0 0 0 999px rgba(0,0,0,.5);cursor:move;touch-action:none}
+.cbox i{position:absolute;width:24px;height:24px;background:var(--accent);border:2px solid #fff;border-radius:50%}
+.cbox i[data-h=nw]{top:0;left:0;cursor:nwse-resize}.cbox i[data-h=ne]{top:0;right:0;cursor:nesw-resize}
+.cbox i[data-h=sw]{bottom:0;left:0;cursor:nesw-resize}.cbox i[data-h=se]{bottom:0;right:0;cursor:nwse-resize}
+fieldset{border:0;padding:0;margin:0}
+.cats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px 20px;margin-top:8px}
+.cats div b{font-size:13px;color:var(--muted);display:block;margin-bottom:2px}
+.err{color:#B3261E;font-size:14px;margin:0}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .err{color:#FFB4AB}}
+:root[data-theme="dark"] .err{color:#FFB4AB}
+.toast{position:fixed;left:50%;bottom:max(20px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:8px;z-index:30;max-width:calc(100% - 32px);font-size:14.5px}
+.toast[hidden]{display:none}
+.foot{border-top:1px solid var(--line);margin-top:8px;padding-block:18px 28px;font-size:13.5px;color:var(--muted)}
+
+@media (max-width:860px){
+  .shell{grid-template-columns:minmax(0,1fr);gap:16px}
+  .tree{display:none;position:static}
+  body.tree-open .tree{display:block;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px}
+  .btn.browse{display:inline-block}
+  .detail{grid-template-columns:minmax(0,1fr);gap:24px}
+}
+</style>
+
+<div class="top"><div class="wrap">
+  <button class="brand" id="home" aria-label="Arlene's Kitchen Table, home"><svg class="sq" viewBox="0 0 48 48" fill="currentColor" aria-hidden="true"><path d="M14 40C2 36 2 14 14 8c6-3 11 1 9 6-2-3-5-2-6 2-2 6 1 15 7 18z"/><ellipse cx="26" cy="33" rx="9" ry="10"/><circle cx="34" cy="20" r="6.5"/><path d="M30.5 16 31.5 8.5 37 14z"/><circle cx="36.5" cy="19" r="1.3" fill="var(--bg)"/><circle cx="40.2" cy="21.5" r="1.2"/></svg><span class="bt"><b>Arlene's Kitchen Table</b><span>&ldquo;Are you hungry?&rdquo; That wasn&rsquo;t a question.</span></span></button>
+  <div class="search"><input id="q" type="search" placeholder="Search cards, cooks or places" aria-label="Search recipes"></div>
+  <button class="btn browse" id="browseBtn" aria-expanded="false">Browse</button>
+  <button class="btn primary" id="addBtn">Add a card</button>
+</div></div>
+
+<div class="wrap">
+  <div class="shell">
+    <nav class="tree" id="tree" aria-label="Recipe categories"></nav>
+    <main id="main"></main>
+  </div>
+  <div class="foot"><svg class="sq" viewBox="0 0 48 48" fill="currentColor" aria-hidden="true"><path d="M14 40C2 36 2 14 14 8c6-3 11 1 9 6-2-3-5-2-6 2-2 6 1 15 7 18z"/><ellipse cx="26" cy="33" rx="9" ry="10"/><circle cx="34" cy="20" r="6.5"/><path d="M30.5 16 31.5 8.5 37 14z"/><circle cx="36.5" cy="19" r="1.3" fill="var(--bg)"/><circle cx="40.2" cy="21.5" r="1.2"/></svg>
+    <div><p class="says" id="says"></p><p>For Arlene Petriella, who kept every glass topped off and laughed the whole time. Handwritten recipes, no ads, no one selling.</p>
+    <p>Prototype with made-up sample cards. Nothing you add here is saved, and Interpret shows pre-written readings.</p></div><figure class="polaroid" id="polaroid"></figure></div>
+</div>
+
+<div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="mtitle"><div class="mbox" id="mbox"></div></div>
+<div class="toast" id="toast" hidden role="status"></div>
+
+<script>
+const TREE=[
+ {id:'meals',label:'Meals',kids:[{id:'breakfast',label:'Breakfast'},{id:'lunch',label:'Lunch'},{id:'dinner',label:'Dinner'}]},
+ {id:'sweets',label:'Dessert',kids:[{id:'cakes',label:'Cakes'},{id:'cookies',label:'Cookies & Bars'},{id:'pies',label:'Pies & Pastries'},{id:'puddings',label:'Puddings & Custards'}]},
+ {id:'breads',label:'Breads'},
+ {id:'holiday',label:'Holiday',kids:[{id:'thanksgiving',label:'Thanksgiving'},{id:'christmas',label:'Christmas'}]},
+ {id:'ethnic',label:'Ethnic',kids:[{id:'german',label:'German'},{id:'italian',label:'Italian'},{id:'mexican',label:'Mexican'},{id:'polish',label:'Polish'}]}
+];
+const RECIPES=[
+{id:'pound',title:"Aunt Dot's Pound Cake",by:'Dorothy "Dot" Hendricks',where:'Ohio',year:1958,cats:['cakes','christmas'],paper:'index',font:'Caveat',fs:1.2,ink:'#243b8c',stain:true,
+ lines:['Pound Cake <small>(Dot)</small>','1 lb butter','1 lb sugar','10 eggs','1 lb flour &ndash; sifted','1 tsp. vanilla','Cream butter + sugar til light.','Eggs 1 at a time. Bake slow.'],
+ ingredients:['1 lb butter','1 lb sugar','10 eggs','1 lb flour, {?sifted}','1 tsp vanilla'],
+ method:'Cream the butter and sugar until light. Add the eggs one at a time. Bake slow.',
+ suggest:{note:'The card gives no oven temperature or time. Pound cakes are usually baked at about 325°F for 70 to 90 minutes in a tube or loaf pan, until a toothpick comes out clean.'}},
+{id:'anise',title:"Nonna Rosa's Anise Cookies",by:'Rosa Bellini',where:'Philadelphia',year:1962,cats:['cookies','italian','christmas'],paper:'index',font:'Nothing You Could Do',fs:.9,ink:'#1c2a5e',noMethod:true,
+ lines:['Anise Cookies <small>(Nonna)</small>','4 eggs','1 c. sugar','&frac12; c. oil','3 c. flour','3 tsp. baking powder','anise &ndash; to taste','bake 350 til golden'],
+ ingredients:['4 eggs','1 cup sugar','½ cup oil','3 cups flour','3 tsp baking powder','{?anise}, to taste'],
+ method:'Bake at 350 until golden.',
+ suggest:{steps:['Beat the eggs and sugar until pale, then stir in the oil and anise.','Mix the flour and baking powder, then stir them into the wet mixture to make a soft dough.','Roll into small balls or ropes and place on a lined sheet.','Bake at 350°F for 10 to 12 minutes until golden on the bottom.','Cool, then glaze with powdered sugar and milk if you like.']}},
+{id:'meatloaf',title:"Mom's Meatloaf",by:'Carol Dunham',where:'Dayton, Ohio',year:1974,cats:['dinner'],paper:'scrap',font:'Reenie Beanie',fs:1.35,ink:'#555',noMethod:true,
+ lines:['MEATLOAF','2 lb hamburger','1 onion','1 c. bread crumbs','2 eggs','salt + pepper','ketchup on top','(Dad likes more onion)'],
+ ingredients:['2 lb hamburger','1 onion (more for Dad)','1 cup bread crumbs','2 eggs','salt and pepper','ketchup, for the top'],
+ method:null,
+ suggest:{steps:['Heat the oven to 350°F.','Chop the onion fine. Mix it with the hamburger, bread crumbs, eggs, salt and pepper by hand until just combined.','Shape into a loaf in a baking pan and spread ketchup over the top.','Bake about 1 hour, until the middle reaches 160°F.','Rest 10 minutes before slicing.']}},
+{id:'pierogi',title:"Grandma Helen's Pierogi",by:'Helen Nowak',where:'Buffalo, New York',year:1966,cats:['dinner','polish','christmas'],paper:'notebook',font:'Caveat',fs:1.15,ink:'#1d2b57',
+ lines:['Pierogi <small>&ndash; Helen</small>','DOUGH','3 c. flour','1 egg','&frac12; c. sour cream','pinch of salt','warm water to make soft','FILLING','5 potatoes, boiled + mashed','1 lb farmer cheese','fried onion','Roll thin, cut circles.','Fill, pinch good.','Boil til they float.','Fry in butter w/ onions.'],
+ ingredients:['Dough: 3 cups flour, 1 egg, ½ cup sour cream, pinch of salt, warm water to make it soft','Filling: 5 potatoes, boiled and mashed','1 lb farmer cheese','Fried onion'],
+ method:'Roll thin and cut circles. Fill and pinch well. Boil until they float. Fry in butter with onions.',
+ suggest:{note:'No amounts for the onion or butter, and the card does not say to drain the potatoes well or let the filling cool before filling. Boiling usually takes 3 to 5 minutes.'}},
+{id:'pancakes',title:'Sunday Pancakes',by:'Judy Marsh',where:'Minnesota',year:1981,cats:['breakfast'],paper:'index',font:'Shadows Into Light',fs:.95,ink:'#222',
+ lines:['Sunday Pancakes','1&frac12; c. flour','1 Tbs. sugar','3&frac12; tsp. baking powder','1 egg','1&frac14; c. milk','3 Tbs. melted butter','Mix wet, mix dry. Dont overmix!'],
+ ingredients:['1½ cups flour','1 Tbsp sugar','3½ tsp baking powder','1 egg','1¼ cups milk','3 Tbsp melted butter'],
+ method:"Mix the wet and dry ingredients separately, then combine. Don't overmix!",
+ suggest:{note:'No griddle temperature is given. A medium-hot griddle works, about 2 minutes on the first side, until bubbles form, then 1 to 2 minutes on the second.'}},
+{id:'zucchini',title:'Zucchini Bread',by:'Marge, from church',where:'Iowa',year:1977,cats:['breads'],paper:'scrap',font:'Reenie Beanie',fs:1.3,ink:'#1a1a1a',stain:true,
+ lines:['Zucchini Bread <small>(Marge)</small>','3 eggs','1 c. oil','2 c. sugar','2 c. grated zucchini','3 c. flour','1 tsp. soda','1 tsp. cinnamon','350&deg; &ndash; 1 hr'],
+ ingredients:['3 eggs','1 cup oil','2 cups sugar','2 cups grated zucchini','3 cups flour','1 tsp {?baking soda}','1 tsp cinnamon'],
+ method:'350° for 1 hour.',
+ suggest:{note:'The card does not say how to mix it. Usually you beat the eggs, oil and sugar, stir in the zucchini, fold in the dry ingredients, and divide between two greased loaf pans.'}},
+{id:'relish',title:'Cranberry Relish',by:'Ruth Abbott',where:'Vermont',year:1969,cats:['thanksgiving'],paper:'index',font:'Caveat',fs:1.2,ink:'#2a2a2a',noMethod:true,
+ lines:['Cranberry Relish','1 bag cranberries','2 oranges &ndash; with peel','1 apple','1 c. sugar','','(for Thanksgiving)'],
+ ingredients:['1 bag cranberries','2 oranges, with the peel','1 apple','1 cup sugar'],
+ method:null,
+ suggest:{steps:['Pick over the cranberries. Cut the oranges and apple into chunks and remove any seeds.','Grind or pulse everything together until coarse.','Stir in the sugar.','Chill overnight so the sugar dissolves and the flavors blend.']}},
+{id:'arroz',title:"Abuela's Arroz con Leche",by:'Lupe Garza',where:'San Antonio, Texas',year:1971,cats:['puddings','mexican'],paper:'index',font:'Covered By Your Grace',fs:1,ink:'#1c2a5e',
+ lines:['Arroz con Leche','1 taza de arroz','4 tazas de leche','1 raja de canela','&frac34; taza de az&uacute;car','pasitas','A fuego lento, moviendo,','hasta que espese.'],
+ ingredients:['1 taza de arroz','4 tazas de leche','1 raja de canela','¾ taza de azúcar','pasitas'],
+ method:'A fuego lento, moviendo, hasta que espese.',
+ en:{ingredients:['1 cup rice','4 cups milk','1 cinnamon stick','¾ cup sugar','raisins'],method:'Over low heat, stirring, until it thickens.'},
+ suggest:{note:'The card does not say when to add the sugar and raisins. A common way is to simmer the rice in the milk with the cinnamon, then add the sugar and raisins near the end. Allow 30 to 40 minutes in all.'}},
+{id:'strudel',title:"Oma's Apfelstrudel",by:'Greta Vogel',where:'Milwaukee',year:1955,cats:['pies','german'],paper:'index',font:'Shadows Into Light',fs:.95,ink:'#243b8c',noMethod:true,
+ lines:['Apfelstrudel','Teig: 2 c. flour, 1 egg,','4 EL &Ouml;l, warm water','F&uuml;llung: 6 &Auml;pfel, sliced','Brosamen in Butter','Zimt, Zucker, Rosinen','Teig ausziehen!!'],
+ ingredients:['Dough: 2 cups flour, 1 egg, 4 tablespoons oil, warm water','Filling: 6 apples, sliced','Breadcrumbs browned in butter','Cinnamon, sugar, raisins'],
+ method:'Teig ausziehen!!',
+ en:{ingredients:['Dough: 2 cups flour, 1 egg, 4 tablespoons oil, warm water','Filling: 6 apples, sliced','Breadcrumbs browned in butter','Cinnamon, sugar, raisins'],method:'Stretch the dough!!'},
+ suggest:{steps:['Knead the dough until smooth, rest it 30 minutes under a warm bowl, then stretch it paper-thin over a floured cloth.','Scatter the buttered crumbs over the dough, then the apples, cinnamon, sugar and raisins.','Roll it up using the cloth and set it seam-side down on a baking sheet.','Brush with butter and bake at 375°F for 35 to 40 minutes until golden.']}},
+{id:'pumpkin',title:'Pumpkin Pie',by:'Evelyn Parrish',where:'Maine',year:1952,cats:['pies','thanksgiving'],paper:'scrap',font:'Nothing You Could Do',fs:.85,ink:'#1c2a5e',stain:true,
+ lines:['Pumpkin Pie','1 can pumpkin','&frac34; c. sugar','&frac12; tsp. salt','1 tsp. cinnamon','&frac12; tsp. ginger, &frac14; tsp. cloves','2 eggs','1&#8531; c. evap. milk','425&deg; 15 min, then 350&deg; til set'],
+ ingredients:['1 can pumpkin','¾ cup sugar','½ tsp salt','1 tsp cinnamon','½ tsp ginger','¼ tsp cloves','2 eggs','1⅔ cups {?evaporated} milk'],
+ method:'425° for 15 minutes, then 350° until set.',
+ suggest:{note:'The card does not mention a crust. Use a 9-inch unbaked pie shell, whisk everything together, and pour it in. It is set when a knife near the center comes out clean.'}},
+{id:'chicken',title:"Aunt Lou's Chicken Salad",by:'Louise Teague',where:'Georgia',year:1986,cats:['lunch'],paper:'index',font:'Covered By Your Grace',fs:1,ink:'#222',noMethod:true,
+ lines:['Chicken Salad <small>(Lou)</small>','3 c. cooked chicken','1 c. celery','&frac12; c. grapes','&frac12; c. mayo','1 Tbs. lemon juice','S + P','pecans if you have them'],
+ ingredients:['3 cups cooked chicken','1 cup celery','½ cup grapes','½ cup mayonnaise','1 Tbsp lemon juice','salt and pepper','pecans, if you have them'],
+ method:null,
+ suggest:{steps:['Chop the chicken and celery, and halve the grapes.','Stir the mayonnaise and lemon juice together, then fold in everything else.','Season with salt and pepper and add chopped pecans.','Chill an hour before serving.']}}
+];
+
+/* Arlene's sayings and photos. Add more to these lists; photos are image URLs. */
+const SAYINGS=['Keep your fork.','Are you hungry?'];
+const PHOTOS=[];
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const SQP='<path d="M14 40C2 36 2 14 14 8c6-3 11 1 9 6-2-3-5-2-6 2-2 6 1 15 7 18z"/><ellipse cx="26" cy="33" rx="9" ry="10"/><circle cx="34" cy="20" r="6.5"/><path d="M30.5 16 31.5 8.5 37 14z"/><circle cx="36.5" cy="19" r="1.3" fill="var(--bg)"/><circle cx="40.2" cy="21.5" r="1.2"/>';
+const ACORN='<path d="M36 28h8c0 5-2 8-4 8s-4-3-4-8z" fill="#9A6A33"/><rect x="35" y="26" width="10" height="3" rx="1.5" fill="#5E3B17"/>';
+const SQ=(cls,acorn)=>`<svg class="${cls}" viewBox="0 0 48 48" fill="currentColor" aria-hidden="true">${SQP}${acorn?ACORN:''}</svg>`;
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt=s=>esc(s).replace(/\{\?([^}]+)\}/g,'<mark title="Hard to read. Best guess.">$1</mark>');
+const S={view:'browse',node:'all',q:'',decade:'all',few:false,id:null,done:{},reading:null,en:false,sug:true,look:'typed',sel:{}};
+const nodes={};TREE.forEach(g=>{nodes[g.id]={label:g.label,ids:[g.id,...(g.kids||[]).map(k=>k.id)]};(g.kids||[]).forEach(k=>nodes[k.id]={label:k.label,ids:[k.id],parent:g.label})});
+const match=(r,id)=>id==='all'||nodes[id].ids.some(x=>r.cats.includes(x));
+const find=id=>RECIPES.find(r=>r.id===id);
+const dec=y=>Math.floor(y/10)*10;
+
+function filtered(){
+  const q=S.q.trim().toLowerCase();
+  return RECIPES.filter(r=>match(r,S.node)&&(S.decade==='all'||dec(r.year)==S.decade)&&(!S.few||r.noMethod)&&
+    (!q||[r.title,r.by,r.where,...(r.ingredients||[])].join(' ').toLowerCase().includes(q)));
+}
+function paper(r){
+  if(r.img)return `<div class="paper upload"><img src="${r.img}" alt="Photo of the handwritten card for ${esc(r.title)}"></div>`;
+  const L=r.lines.map((t,i)=>`<div class="ln${i?'':' t'}">${t}</div>`).join('');
+  return `<div class="paper ${r.paper}${r.stain?' stain':''}" role="img" aria-label="Handwritten ${r.paper==='notebook'?'notebook page':r.paper==='scrap'?'scrap of paper':'index card'}: ${esc(r.title)}" style="--fs:${r.fs};--ink-card:${r.ink};font-family:'${r.font}',cursive${r.h?`;aspect-ratio:100/${r.h}`:''}"><div class="sheet">${L}</div></div>`;
+}
+/* Rewrites the typed reading as a clean handwritten notebook page */
+function handR(r,o){
+  const d=(o.en&&r.en)?r.en:r,clean=s=>String(s).replace(/\{\?([^}]+)\}/g,'$1');
+  const wrap=(s,n)=>{const out=[];let cur='';clean(s).split(' ').forEach(w=>{if((cur+' '+w).trim().length>n){out.push(cur);cur=w}else cur=(cur+' '+w).trim()});if(cur)out.push(cur);return out};
+  const L=[esc(r.title),'Ingredients:'];
+  d.ingredients.forEach(i=>wrap(i,30).forEach((l,k)=>L.push((k?'  ':'&ndash; ')+esc(l))));
+  L.push('Method:');
+  if(d.method)wrap(d.method,30).forEach(l=>L.push(esc(l)));else L.push('(none written)');
+  if(o.sug&&r.suggest){L.push('Suggested:');
+    if(r.suggest.steps)r.suggest.steps.forEach((t,n)=>wrap((n+1)+'. '+t,30).forEach((l,k)=>L.push((k?'  ':'')+esc(l))));
+    else wrap(r.suggest.note,30).forEach(l=>L.push(esc(l)))}
+  return {paper:'notebook',font:'Caveat',fs:1.15,ink:'#1d2b57',title:r.title,lines:L,h:Math.round(L.length*6.4+9.6)};
+}
+const cap=r=>`${esc(r.by)} · ${esc(r.where)} · ${r.year}`;
+
+function renderTree(){
+  const n=id=>RECIPES.filter(r=>match(r,id)).length;
+  const b=(id,label,cls='')=>`<button class="tn ${cls} ${S.view==='browse'&&S.node===id?'on':''} ${n(id)?'':'zero'}" data-node="${id}"><span>${label}</span><b>${n(id)}</b></button>`;
+  let h='<h2>Browse the drawer</h2>'+b('all','All cards');
+  TREE.forEach(g=>{h+=b(g.id,g.label,'grp');if(g.kids)h+=`<div class="kids">${g.kids.map(k=>b(k.id,k.label)).join('')}</div>`});
+  $('#tree').innerHTML=h;
+}
+function renderBrowse(){
+  const list=filtered(),nd=S.node==='all'?'All cards':(nodes[S.node].parent?nodes[S.node].parent+' › ':'')+nodes[S.node].label;
+  const chip=(k,v,l,p)=>`<button class="chip" aria-pressed="${p}" data-chip="${k}" data-v="${v}">${l}</button>`;
+  let h=`<div class="head"><h1>${esc(nd)}</h1><p>${list.length} ${list.length===1?'card':'cards'}</p></div><div class="chips" role="group" aria-label="Filters">`;
+  h+=chip('decade','all','Any decade',S.decade==='all');
+  [1950,1960,1970,1980].forEach(d=>h+=chip('decade',d,d+'s',S.decade==d));
+  h+=chip('few','1','Little or no instructions',S.few)+'</div>';
+  h+=list.length?'<div class="grid">'+list.map(r=>`<button class="item" data-open="${r.id}">${r.id===S.peek?SQ('peek',false):''}<div class="cardwrap">${paper(r)}</div><div class="cap"><b>${esc(r.title)}</b><span>${cap(r)}</span>${r.noMethod?'<br><span class="tag">Little or no instructions</span>':''}</div></button>`).join('')+'</div>':'<div class="empty">${SQ('sq',Math.random()<.5)}<p style="margin:0">Nothing here but a squirrel. Try another search, category or decade.</p></div>';
+  $('#main').innerHTML=h;
+}
+function typed(r,o){
+  const d=(o.en&&r.en)?r.en:r,s=r.suggest;
+  let h=`<article class="typed"><h3>${esc(r.title)}</h3><p class="by">From ${esc(r.by)}, ${esc(r.where)}, about ${r.year}</p><h4>Ingredients</h4><ul>${d.ingredients.map(i=>`<li>${fmt(i)}</li>`).join('')}</ul><h4>Method</h4>`;
+  h+=d.method?`<p>${fmt(d.method)}</p>`:'<p class="none">Nothing is written on the card.</p>';
+  if(o.sug&&s)h+=`<div class="sug"><h4>Suggested, not on the original card</h4>${s.steps?`<ol>${s.steps.map(t=>`<li>${esc(t)}</li>`).join('')}</ol>`:`<p>${esc(s.note)}</p>`}</div>`;
+  return h+'</article>';
+}
+function renderDetail(){
+  const r=find(S.id),up=!!r.img&&!r.ingredients.length,done=S.done[r.id];
+  let tools;
+  if(S.reading===r.id)tools='<div class="reading"><span class="dots"><i></i><i></i><i></i></span>Reading the handwriting</div>';
+  else if(up)tools='<p class="hint" style="margin:0">On the live site, Interpret reads this photo for you. Here, type the ingredients and method when you add a card and they show up in the typed and handwriting versions.</p>';
+  else if(!done)tools='<button class="btn primary" data-act="interpret">Interpret this card</button><p class="hint">Reads the handwriting and writes it out as a typed recipe. Your original stays as it is.</p>';
+  else tools=`<div class="row" style="margin-bottom:12px"><button class="chip" aria-pressed="${S.look==='typed'}" data-act="look" data-v="typed">Typed</button><button class="chip" aria-pressed="${S.look==='hand'}" data-act="look" data-v="hand">Clear handwriting</button>${r.en?`<button class="chip" aria-pressed="${S.en}" data-act="en">English</button>`:''}</div>${S.look==='hand'?`<div class="cardwrap">${paper(handR(r,{en:S.en,sug:S.sug}))}</div><p class="hint">The same words as a clean copy in easy-to-read handwriting. Your original card stays as it is.</p>`:typed(r,{en:S.en,sug:S.sug})}
+    <p class="legend"><mark>Underlined</mark> words were hard to read. Best guess shown.</p>
+    ${r.suggest?`<label class="chk" style="margin-top:10px"><input type="checkbox" id="sugchk" ${S.sug?'checked':''}> Include the suggested ${r.suggest.steps?'method':'note'} (marked as not original)</label>`:''}`;
+  $('#main').innerHTML=`<button class="back" data-act="back">← Back to the drawer</button>
+  <div class="detail"><div class="orig"><div class="cardwrap">${paper(r)}</div><p class="note">The card as it was submitted. ${cap(r)}</p></div>
+  <aside class="side"><div><h1>${esc(r.title)}</h1><p class="meta">${cap(r)}</p></div>
+  <section class="box" aria-label="Interpret"><h2>Interpret</h2>${tools}</section>
+  <section class="box" aria-label="Print"><h2>Print</h2><div class="row">
+    <button class="btn" data-print="photo">The card as is</button>
+    <button class="btn" data-print="typed" ${up?'disabled title="Interpret works on sample cards in this prototype"':''}>Typed recipe</button>
+    <button class="btn" data-print="hand" ${up?'disabled':''}>Clear handwriting copy</button>
+    <button class="btn" data-print="both" ${up?'disabled':''}>Both on one page</button></div>
+    <p class="hint">Opens a preview first. No pop-ups, no ads, no extra pages.</p></section></aside></div>`;
+}
+function renderAdd(){
+  const cats=TREE.map(g=>g.kids?`<div><b>${g.label}</b>${g.kids.map(k=>`<label class="chk"><input type="checkbox" name="cat" value="${k.id}"> ${k.label}</label>`).join('')}</div>`:`<div><b>${g.label}</b><label class="chk"><input type="checkbox" name="cat" value="${g.id}"> ${g.label}</label></div>`).join('');
+  $('#main').innerHTML=`<form class="form" id="addForm" novalidate><h1>Add a card</h1>
+  <div class="field"><label for="file">Photo or scan of the card</label><div class="drop" id="drop"><div id="dropmsg">Choose a photo of the handwritten card</div><input type="file" id="file" accept="image/*"></div></div>
+  <div class="field"><label for="title">Name of the recipe</label><input type="text" id="title" placeholder="Grandma's Banana Bread"></div>
+  <div class="two"><div class="field"><label for="by">Whose handwriting</label><input type="text" id="by" placeholder="Name, or Unknown"></div>
+  <div class="field"><label for="where">Where</label><input type="text" id="where" placeholder="City or region"></div></div>
+  <div class="field" style="max-width:200px"><label for="year">About what year</label><input type="number" id="year" min="1800" max="2026" placeholder="1965"></div>
+  <p class="hint" style="margin:0">On the live site, the words below fill in from your photo and you fix anything that was misread. In this prototype, type or paste them.</p>
+  <div class="field"><label for="ing">Ingredients, one per line</label><textarea id="ing" placeholder="1 lb butter&#10;1 lb sugar&#10;10 eggs"></textarea></div>
+  <div class="field"><label for="meth">Method, if the card has one</label><textarea id="meth" placeholder="Leave empty if the card gives no instructions"></textarea></div>
+  <fieldset class="field"><legend>Where does it belong? Pick as many as fit.</legend><div class="cats">${cats}</div></fieldset>
+  <label class="chk"><input type="checkbox" id="rights"> This is a family or personal card, not a page from a published cookbook.</label>
+  <p class="err" id="err" hidden></p>
+  <div class="row"><button type="submit" class="btn primary">Add to the drawer</button><button type="button" class="btn" data-act="back">Cancel</button></div>
+  <p class="hint" style="margin:0">Photo details like location are removed before a card is shown. Cards can be removed on request.</p></form>`;
+  let img=null,src=null,orig=null,rot=0,flip=false,crop=null,drag=null;
+  const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+  const drawBox=()=>{const b=$('#cbox');b.style.left=crop.x*100+'%';b.style.top=crop.y*100+'%';b.style.width=crop.w*100+'%';b.style.height=crop.h*100+'%'};
+  const apply=()=>{const im=new Image();im.onload=()=>{
+    const sc=Math.min(1,1600/Math.max(im.naturalWidth,im.naturalHeight)),w=im.naturalWidth*sc,h=im.naturalHeight*sc,q=rot%2,c=document.createElement('canvas');
+    c.width=q?h:w;c.height=q?w:h;const x=c.getContext('2d');x.translate(c.width/2,c.height/2);x.rotate(rot*Math.PI/2);if(flip)x.scale(-1,1);x.drawImage(im,-w/2,-h/2,w,h);
+    img=c.toDataURL('image/jpeg',.85);$('#pv').src=img};im.src=src};
+  $('#file').onchange=e=>{const f=e.target.files[0];if(!f)return;const fr=new FileReader();fr.onload=()=>{src=fr.result;rot=0;flip=false;
+    $('#dropmsg').innerHTML=`<div class="cw" id="cw"><img id="pv" alt="Preview of your photo" draggable="false"><div class="cbox" id="cbox" hidden><i data-h="nw"></i><i data-h="ne"></i><i data-h="sw"></i><i data-h="se"></i></div></div>
+    <div class="row" id="tools" style="justify-content:center;margin-bottom:10px"><button type="button" class="btn" id="rl">Turn left</button><button type="button" class="btn" id="rr">Turn right</button><button type="button" class="btn" id="fl">Flip</button><button type="button" class="btn" id="cr">Crop</button><button type="button" class="btn" id="rs">Start over</button></div>
+    <div class="row" id="ctools" hidden style="justify-content:center;margin-bottom:10px"><span>Drag the corners, or drag the box to move it.</span><button type="button" class="btn primary" id="ca">Apply crop</button><button type="button" class="btn" id="cc">Cancel</button></div>`;
+    orig=src;
+    $('#rl').onclick=()=>{rot=(rot+3)%4;apply()};$('#rr').onclick=()=>{rot=(rot+1)%4;apply()};$('#fl').onclick=()=>{flip=!flip;apply()};
+    $('#rs').onclick=()=>{src=orig;rot=0;flip=false;apply()};
+    const endCrop=()=>{$('#cbox').hidden=true;$('#tools').hidden=false;$('#ctools').hidden=true;drag=null};
+    $('#cr').onclick=()=>{crop={x:.08,y:.08,w:.84,h:.84};$('#cbox').hidden=false;$('#tools').hidden=true;$('#ctools').hidden=false;drawBox()};
+    $('#cc').onclick=endCrop;
+    $('#ca').onclick=()=>{const im=new Image();im.onload=()=>{const W=im.naturalWidth,H=im.naturalHeight,c=document.createElement('canvas');c.width=Math.round(W*crop.w);c.height=Math.round(H*crop.h);
+      c.getContext('2d').drawImage(im,W*crop.x,H*crop.y,W*crop.w,H*crop.h,0,0,c.width,c.height);src=c.toDataURL('image/jpeg',.9);rot=0;flip=false;endCrop();apply()};im.src=img};
+    const cb=$('#cbox');
+    cb.onpointerdown=e=>{e.preventDefault();cb.setPointerCapture(e.pointerId);drag={h:e.target.dataset.h||'move',x:e.clientX,y:e.clientY,c:{...crop}}};
+    cb.onpointermove=e=>{if(!drag)return;const r=$('#cw').getBoundingClientRect(),dx=(e.clientX-drag.x)/r.width,dy=(e.clientY-drag.y)/r.height,c=drag.c,h=drag.h,n={...c},m=.1;
+      if(h==='move'){n.x=clamp(c.x+dx,0,1-c.w);n.y=clamp(c.y+dy,0,1-c.h)}
+      else{if(h.includes('w')){const x=clamp(c.x+dx,0,c.x+c.w-m);n.w=c.x+c.w-x;n.x=x}
+        if(h.includes('e'))n.w=clamp(c.w+dx,m,1-c.x);
+        if(h.includes('n')){const y=clamp(c.y+dy,0,c.y+c.h-m);n.h=c.y+c.h-y;n.y=y}
+        if(h.includes('s'))n.h=clamp(c.h+dy,m,1-c.y)}
+      crop=n;drawBox()};
+    cb.onpointerup=cb.onpointercancel=()=>{drag=null};
+    apply()};fr.readAsDataURL(f)};
+  $('#addForm').onsubmit=e=>{e.preventDefault();
+    const t=$('#title').value.trim(),c=[...document.querySelectorAll('[name=cat]:checked')].map(x=>x.value),er=$('#err');
+    const m=!img?'Choose a photo of the card first.':!t?'Give the recipe a name.':!c.length?'Pick at least one category.':!$('#rights').checked?'Please confirm this is a family or personal card.':'';
+    if(m){er.textContent=m;er.hidden=false;return}
+    const r={id:'u'+Date.now(),title:t,by:$('#by').value.trim()||'Unknown',where:$('#where').value.trim()||'Unknown',year:+$('#year').value||new Date().getFullYear(),cats:c,img,ingredients:$('#ing').value.split('\n').map(x=>x.trim()).filter(Boolean),method:$('#meth').value.trim()||null};r.noMethod=!r.method;
+    RECIPES.unshift(r);S.view='detail';S.id=r.id;render();window.scrollTo(0,0);toast('Added. Arlene is laughing. (In this prototype it is only kept until you close the page.)')};
+}
+function render(){
+  renderTree();
+  if(S.view==='browse')renderBrowse();else if(S.view==='detail')renderDetail();else renderAdd();
+  document.body.classList.remove('tree-open');$('#browseBtn').setAttribute('aria-expanded','false');
+}
+function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>t.hidden=true,3600)}
+function openPrint(mode){
+  const r=find(S.id),o={en:S.en,sug:S.sug};
+  const label={photo:'The card as is',typed:'Typed recipe',hand:'Clear handwriting copy',both:'Both on one page'}[mode];
+  const body=mode==='hand'?`<div class="cardwrap" style="filter:none">${paper(handR(r,o))}</div>`:mode==='photo'?`<div class="cardwrap" style="filter:none">${paper(r)}</div>`:mode==='typed'?typed(r,o):`${paper(r)}${typed(r,o)}`;
+  $('#mbox').innerHTML=`<header><h2 id="mtitle">Print preview: ${label}</h2><div class="row"><button class="btn primary" data-act="doprint">Print</button><button class="btn" data-act="closem">Close</button></div></header><div class="sheetpage ${mode}">${body}</div>
+  <p class="hint">The live site would open your printer here. Letter size shown; A4 is supported too.</p>`;
+  $('#modal').hidden=false;$('#mbox').querySelector('.btn.primary').focus();
+}
+const closeM=()=>{$('#modal').hidden=true};
+
+document.addEventListener('click',e=>{
+  const t=e.target.closest('button');if(!t){if(e.target.id==='modal')closeM();return}
+  if(t.dataset.node){S.view='browse';S.node=t.dataset.node;render();window.scrollTo(0,0);return}
+  if(t.dataset.chip){if(t.dataset.chip==='few')S.few=!S.few;else S.decade=t.dataset.v==='all'?'all':+t.dataset.v;render();return}
+  if(t.dataset.open){S.view='detail';S.id=t.dataset.open;S.en=false;render();window.scrollTo(0,0);return}
+  if(t.dataset.print){openPrint(t.dataset.print);return}
+  const a=t.dataset.act;
+  if(a==='back'){S.view='browse';render()}
+  else if(a==='interpret'){S.reading=S.id;render();setTimeout(()=>{S.done[S.id]=true;S.reading=null;if(S.view==='detail')render()},1000)}
+  else if(a==='en'){S.en=!S.en;render()}
+  else if(a==='look'){S.look=t.dataset.v;render()}
+  else if(a==='closem')closeM();
+  else if(a==='doprint'){toast('Prototype only. The live site would send this to your printer.')}
+  else if(t.id==='home'){S.view='browse';S.node='all';S.q='';$('#q').value='';S.decade='all';S.few=false;render();window.scrollTo(0,0)}
+  else if(t.id==='addBtn'){S.view='add';render();window.scrollTo(0,0)}
+  else if(t.id==='browseBtn'){const o=document.body.classList.toggle('tree-open');t.setAttribute('aria-expanded',o)}
+});
+document.addEventListener('change',e=>{if(e.target.id==='sugchk'){S.sug=e.target.checked;renderDetail()}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeM()});
+$('#q').addEventListener('input',e=>{S.q=e.target.value;if(S.view!=='browse'){S.view='browse';}render()});
+S.peek=pick(RECIPES).id;
+$('#says').textContent='Arlene says: “'+pick(SAYINGS)+'”';
+$('#polaroid').innerHTML=(PHOTOS.length?`<img src="${esc(pick(PHOTOS))}" alt="Arlene">`:'<div class="ph">A photo of Arlene goes here</div>')+'<figcaption>Arlene</figcaption>';
+render();
+</script>
