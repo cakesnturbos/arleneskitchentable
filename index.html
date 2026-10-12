@@ -1,3 +1,8 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Arlene's Kitchen Table</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,6 +22,9 @@
   --bg:#1F1914; --surface:#2B231C; --ink:#F1E6D2; --muted:#B9A78F; --line:#443830;
   --accent:#E8907F; --accent-ink:#2A140F; --soft:#3B2F25; --linen:rgba(255,230,180,.04); --mark:#6B5710; --mark-ink:#FFF1C4; color-scheme:dark}
 *{box-sizing:border-box}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
 body{background:var(--bg) repeating-linear-gradient(0deg,var(--linen) 0 1px,transparent 1px 4px),repeating-linear-gradient(90deg,var(--linen) 0 1px,transparent 1px 4px);color:var(--ink);font:400 16px/1.5 var(--body);padding-inline:16px}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
@@ -161,6 +169,9 @@ label.chk input{margin-top:4px}
 .form h1{font:400 28px/1.2 var(--display);margin:0}
 .field{display:flex;flex-direction:column;gap:6px}
 .field label,.field legend{font-weight:600;font-size:14.5px}
+.lab{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.mic{padding:5px 14px}
+.mic[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .field textarea{resize:vertical;min-height:110px;line-height:1.45}
 .field input[type=text],.field input[type=number],.field textarea{padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);width:100%}
 .two{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
@@ -189,6 +200,8 @@ fieldset{border:0;padding:0;margin:0}
   .detail{grid-template-columns:minmax(0,1fr);gap:24px}
 }
 </style>
+</head>
+<body>
 
 <div class="top"><div class="wrap">
   <button class="brand" id="home" aria-label="Arlene's Kitchen Table, home"><svg class="sq" viewBox="0 0 48 48" fill="currentColor" aria-hidden="true"><path d="M14 40C2 36 2 14 14 8c6-3 11 1 9 6-2-3-5-2-6 2-2 6 1 15 7 18z"/><ellipse cx="26" cy="33" rx="9" ry="10"/><circle cx="34" cy="20" r="6.5"/><path d="M30.5 16 31.5 8.5 37 14z"/><circle cx="36.5" cy="19" r="1.3" fill="var(--bg)"/><circle cx="40.2" cy="21.5" r="1.2"/></svg><span class="bt"><b>Arlene's Kitchen Table</b><span>&ldquo;Are you hungry?&rdquo; That wasn&rsquo;t a question.</span></span></button>
@@ -300,6 +313,7 @@ function filtered(){
     (!q||[r.title,r.by,r.where,...(r.ingredients||[])].join(' ').toLowerCase().includes(q)));
 }
 function paper(r){
+  if(!r.img&&!r.lines)r=handR(r,{});
   if(r.img)return `<div class="paper upload"><img src="${r.img}" alt="Photo of the handwritten card for ${esc(r.title)}"></div>`;
   const L=r.lines.map((t,i)=>`<div class="ln${i?'':' t'}">${t}</div>`).join('');
   return `<div class="paper ${r.paper}${r.stain?' stain':''}" role="img" aria-label="Handwritten ${r.paper==='notebook'?'notebook page':r.paper==='scrap'?'scrap of paper':'index card'}: ${esc(r.title)}" style="--fs:${r.fs};--ink-card:${r.ink};font-family:'${r.font}',cursive${r.h?`;aspect-ratio:100/${r.h}`:''}"><div class="sheet">${L}</div></div>`;
@@ -347,17 +361,18 @@ function renderDetail(){
   const r=find(S.id),up=!!r.img&&!r.ingredients.length,done=S.done[r.id];
   let tools;
   if(S.reading===r.id)tools='<div class="reading"><span class="dots"><i></i><i></i><i></i></span>Reading the handwriting</div>';
+  else if(r.manual)tools=typed(r,{en:false,sug:false});
   else if(up)tools='<p class="hint" style="margin:0">On the live site, Interpret reads this photo for you. Here, type the ingredients and method when you add a card and they show up in the typed and handwriting versions.</p>';
   else if(!done)tools='<button class="btn primary" data-act="interpret">Interpret this card</button><p class="hint">Reads the handwriting and writes it out as a typed recipe. Your original stays as it is.</p>';
   else tools=`<div class="row" style="margin-bottom:12px"><button class="chip" aria-pressed="${S.look==='typed'}" data-act="look" data-v="typed">Typed</button><button class="chip" aria-pressed="${S.look==='hand'}" data-act="look" data-v="hand">Clear handwriting</button>${r.en?`<button class="chip" aria-pressed="${S.en}" data-act="en">English</button>`:''}</div>${S.look==='hand'?`<div class="cardwrap">${paper(handR(r,{en:S.en,sug:S.sug}))}</div><p class="hint">The same words as a clean copy in easy-to-read handwriting. Your original card stays as it is.</p>`:typed(r,{en:S.en,sug:S.sug})}
     <p class="legend"><mark>Underlined</mark> words were hard to read. Best guess shown.</p>
     ${r.suggest?`<label class="chk" style="margin-top:10px"><input type="checkbox" id="sugchk" ${S.sug?'checked':''}> Include the suggested ${r.suggest.steps?'method':'note'} (marked as not original)</label>`:''}`;
   $('#main').innerHTML=`<button class="back" data-act="back">← Back to the drawer</button>
-  <div class="detail"><div class="orig"><div class="cardwrap">${paper(r)}</div><p class="note">The card as it was submitted. ${cap(r)}</p></div>
+  <div class="detail"><div class="orig"><div class="cardwrap">${paper(r)}</div><p class="note">${r.manual?'Typed in and shown as a card.':'The card as it was submitted.'} ${cap(r)}</p></div>
   <aside class="side"><div><h1>${esc(r.title)}</h1><p class="meta">${cap(r)}</p></div>
-  <section class="box" aria-label="Interpret"><h2>Interpret</h2>${tools}</section>
+  <section class="box" aria-label="Interpret"><h2>${r.manual?'The recipe':'Interpret'}</h2>${tools}</section>
   <section class="box" aria-label="Print"><h2>Print</h2><div class="row">
-    <button class="btn" data-print="photo">The card as is</button>
+    <button class="btn" data-print="photo" ${r.manual?'hidden':''}>The card as is</button>
     <button class="btn" data-print="typed" ${up?'disabled title="Interpret works on sample cards in this prototype"':''}>Typed recipe</button>
     <button class="btn" data-print="hand" ${up?'disabled':''}>Clear handwriting copy</button>
     <button class="btn" data-print="both" ${up?'disabled':''}>Both on one page</button></div>
@@ -366,16 +381,16 @@ function renderDetail(){
 function renderAdd(){
   const cats=TREE.map(g=>g.kids?`<div><b>${g.label}</b>${g.kids.map(k=>`<label class="chk"><input type="checkbox" name="cat" value="${k.id}"> ${k.label}</label>`).join('')}</div>`:`<div><b>${g.label}</b><label class="chk"><input type="checkbox" name="cat" value="${g.id}"> ${g.label}</label></div>`).join('');
   $('#main').innerHTML=`<form class="form" id="addForm" novalidate><h1>Add a card</h1>
-  <div class="field"><label for="file">Photo or scan of the card</label><div class="drop" id="drop"><div id="dropmsg">Choose a photo of the handwritten card</div><input type="file" id="file" accept="image/*"></div></div>
+  <div class="field"><label for="file">Photo or scan of the card (optional)</label><div class="drop" id="drop"><div id="dropmsg">Choose a photo of the handwritten card, or skip this and type the recipe below</div><input type="file" id="file" accept="image/*"></div></div>
   <div class="field"><label for="title">Name of the recipe</label><input type="text" id="title" placeholder="Grandma's Banana Bread"></div>
   <div class="two"><div class="field"><label for="by">Whose handwriting</label><input type="text" id="by" placeholder="Name, or Unknown"></div>
   <div class="field"><label for="where">Where</label><input type="text" id="where" placeholder="City or region"></div></div>
   <div class="field" style="max-width:200px"><label for="year">About what year</label><input type="number" id="year" min="1800" max="2026" placeholder="1965"></div>
-  <p class="hint" style="margin:0">On the live site, the words below fill in from your photo and you fix anything that was misread. In this prototype, type or paste them.</p>
-  <div class="field"><label for="ing">Ingredients, one per line</label><textarea id="ing" placeholder="1 lb butter&#10;1 lb sugar&#10;10 eggs"></textarea></div>
-  <div class="field"><label for="meth">Method, if the card has one</label><textarea id="meth" placeholder="Leave empty if the card gives no instructions"></textarea></div>
+  <p class="hint" style="margin:0">No photo needed. Type the recipe, or tap Speak and say it out loud. Say &ldquo;new line&rdquo; between ingredients.</p>
+  <div class="field"><div class="lab"><label for="ing">Ingredients, one per line</label><button type="button" class="btn mic" data-mic="ing" aria-pressed="false">Speak</button></div><textarea id="ing" placeholder="1 lb butter&#10;1 lb sugar&#10;10 eggs"></textarea></div>
+  <div class="field"><div class="lab"><label for="meth">Method, if there is one</label><button type="button" class="btn mic" data-mic="meth" aria-pressed="false">Speak</button></div><textarea id="meth" placeholder="Leave empty if the card gives no instructions"></textarea></div>
   <fieldset class="field"><legend>Where does it belong? Pick as many as fit.</legend><div class="cats">${cats}</div></fieldset>
-  <label class="chk"><input type="checkbox" id="rights"> This is a family or personal card, not a page from a published cookbook.</label>
+  <label class="chk"><input type="checkbox" id="rights"> This is a family or personal recipe, not copied from a published cookbook.</label>
   <p class="err" id="err" hidden></p>
   <div class="row"><button type="submit" class="btn primary">Add to the drawer</button><button type="button" class="btn" data-act="back">Cancel</button></div>
   <p class="hint" style="margin:0">Photo details like location are removed before a card is shown. Cards can be removed on request.</p></form>`;
@@ -411,15 +426,31 @@ function renderAdd(){
     apply()};fr.readAsDataURL(f)};
   $('#addForm').onsubmit=e=>{e.preventDefault();
     const t=$('#title').value.trim(),c=[...document.querySelectorAll('[name=cat]:checked')].map(x=>x.value),er=$('#err');
-    const m=!img?'Choose a photo of the card first.':!t?'Give the recipe a name.':!c.length?'Pick at least one category.':!$('#rights').checked?'Please confirm this is a family or personal card.':'';
+    const ingL=$('#ing').value.split('\n').map(x=>x.trim()).filter(Boolean);
+    const m=!t?'Give the recipe a name.':(!img&&!ingL.length)?'Add a photo of the card, or type in the ingredients.':!c.length?'Pick at least one category.':!$('#rights').checked?'Please confirm this is a family or personal recipe.':'';
     if(m){er.textContent=m;er.hidden=false;return}
-    const r={id:'u'+Date.now(),title:t,by:$('#by').value.trim()||'Unknown',where:$('#where').value.trim()||'Unknown',year:+$('#year').value||new Date().getFullYear(),cats:c,img,ingredients:$('#ing').value.split('\n').map(x=>x.trim()).filter(Boolean),method:$('#meth').value.trim()||null};r.noMethod=!r.method;
+    const r={id:'u'+Date.now(),title:t,by:$('#by').value.trim()||'Unknown',where:$('#where').value.trim()||'Unknown',year:+$('#year').value||new Date().getFullYear(),cats:c,img,manual:!img,ingredients:ingL,method:$('#meth').value.trim()||null};r.noMethod=!r.method;
     RECIPES.unshift(r);S.view='detail';S.id=r.id;render();window.scrollTo(0,0);toast('Added. Arlene is laughing. (In this prototype it is only kept until you close the page.)')};
 }
 function render(){
   renderTree();
   if(S.view==='browse')renderBrowse();else if(S.view==='detail')renderDetail();else renderAdd();
   document.body.classList.remove('tree-open');$('#browseBtn').setAttribute('aria-expanded','false');
+}
+/* Voice typing uses the browser's built-in speech recognition (Chrome, Edge, Safari). */
+function dictate(btn,ta){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){toast('Voice typing is not available in this browser. Try Chrome, Edge or Safari.');return}
+  if(btn._rec){btn._rec.stop();return}
+  const rec=new SR(),base=ta.value.replace(/\s+$/,'');let done='';
+  rec.lang='en-US';rec.continuous=true;rec.interimResults=true;
+  rec.onresult=e=>{let live='';
+    for(let i=e.resultIndex;i<e.results.length;i++){const t=e.results[i][0].transcript;if(e.results[i].isFinal)done+=t+' ';else live+=t}
+    const said=(done+live).replace(/\s*\bnew line\b\s*/gi,'\n').trim();
+    ta.value=(base?base+(said.startsWith('\n')?'':' '):'')+said};
+  rec.onend=()=>{btn._rec=null;btn.setAttribute('aria-pressed','false');btn.textContent='Speak'};
+  rec.onerror=e=>toast(e.error==='not-allowed'||e.error==='service-not-allowed'?'The microphone is blocked. Allow it for this site in your browser settings.':'Voice typing stopped. Tap Speak to try again.');
+  try{rec.start();btn._rec=rec;btn.setAttribute('aria-pressed','true');btn.textContent='Stop'}catch(err){toast('Voice typing could not start. Try again.')}
 }
 function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>t.hidden=true,3600)}
 function openPrint(mode){
@@ -434,6 +465,7 @@ const closeM=()=>{$('#modal').hidden=true};
 
 document.addEventListener('click',e=>{
   const t=e.target.closest('button');if(!t){if(e.target.id==='modal')closeM();return}
+  if(t.dataset.mic){dictate(t,$('#'+t.dataset.mic));return}
   if(t.dataset.node){S.view='browse';S.node=t.dataset.node;render();window.scrollTo(0,0);return}
   if(t.dataset.chip){if(t.dataset.chip==='few')S.few=!S.few;else S.decade=t.dataset.v==='all'?'all':+t.dataset.v;render();return}
   if(t.dataset.open){S.view='detail';S.id=t.dataset.open;S.en=false;render();window.scrollTo(0,0);return}
@@ -457,3 +489,5 @@ $('#says').textContent='Arlene says: “'+pick(SAYINGS)+'”';
 $('#polaroid').innerHTML=(PHOTOS.length?`<img src="${esc(pick(PHOTOS))}" alt="Arlene">`:'<div class="ph">A photo of Arlene goes here</div>')+'<figcaption>Arlene</figcaption>';
 render();
 </script>
+</body>
+</html>
