@@ -41,7 +41,7 @@ header small{color:var(--muted)}
 .fields{display:flex;flex-direction:column;gap:12px;min-width:0}
 .two{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
 label{font-weight:600;font-size:14px;display:block;margin-bottom:3px}
-input[type=text],input[type=number],input[type=email],textarea{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+input[type=text],input[type=number],input[type=password],textarea{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
 textarea{min-height:96px;resize:vertical;line-height:1.45}
 .cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:4px 14px}
 .cats label{font-weight:400;display:flex;gap:6px;align-items:center;margin:0;font-size:14.5px}
@@ -50,7 +50,8 @@ textarea{min-height:96px;resize:vertical;line-height:1.45}
 .msg{margin:0 0 14px;padding:10px 14px;border-radius:8px;background:var(--soft)}
 .msg.err{border:1px solid var(--accent)}
 .empty{color:var(--muted);padding:32px 0}
-code{background:var(--soft);padding:1px 6px;border-radius:4px;font-size:.92em}
+code{background:var(--soft);padding:1px 6px;border-radius:4px;font-size:.92em;word-break:break-all}
+ol{padding-left:20px}
 @media (max-width:700px){.card{grid-template-columns:minmax(0,1fr)}}
 </style>
 </head>
@@ -58,14 +59,13 @@ code{background:var(--soft);padding:1px 6px;border-radius:4px;font-size:.92em}
 <div class="wrap">
   <header>
     <div><h1>Arlene's Kitchen Table</h1><small>Admin: approve cards before anyone else sees them</small></div>
-    <div class="row" id="who" hidden><span class="meta" id="whoEmail"></span><button class="btn" id="out">Sign out</button></div>
+    <div class="row" id="who" hidden><button class="btn" id="out">Forget my token on this device</button></div>
   </header>
   <div id="note" class="msg" hidden role="status"></div>
   <main id="app"></main>
 </div>
 
 <script src="config.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
 const TREE=[
  ['Meals',[['breakfast','Breakfast'],['lunch','Lunch'],['dinner','Dinner']]],
@@ -74,132 +74,219 @@ const TREE=[
  ['Holiday',[['thanksgiving','Thanksgiving'],['christmas','Christmas']]],
  ['Ethnic',[['german','German'],['italian','Italian'],['mexican','Mexican'],['polish','Polish']]]
 ];
+const cfg=window.AKT_CONFIG||{};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const cfg=window.AKT_CONFIG||{};
 const app=$('#app');
-let sb=null,user=null,rows=[],tab='pending',confirming=null;
+const KEY='akt_admin_token';
+let token='',pending=[],approved=[],tab='pending',confirming=null,shas={};
+const blobs={};
 
 function note(t,err){const n=$('#note');n.textContent=t;n.className='msg'+(err?' err':'');n.hidden=!t}
+try{token=localStorage.getItem(KEY)||''}catch(e){}
 
-function setupMissing(){
-  app.innerHTML=`<div class="box"><p><b>The admin page is not connected yet.</b></p>
-  <p>Open <code>config.js</code> in the repo and put in your Supabase project URL and public ("anon") key. Then reload this page.</p></div>`;
-}
-function renderLogin(msg){
+/* ---- GitHub helpers ---- */
+const api=(path,o={})=>fetch('https://api.github.com'+path,{...o,headers:{
+  Authorization:'Bearer '+token,Accept:o.raw?'application/vnd.github.raw+json':'application/vnd.github+json',
+  'X-GitHub-Api-Version':'2022-11-28',...(o.headers||{})}});
+const inbox=p=>`/repos/${cfg.owner}/${cfg.inboxRepo}/contents/${p}`;
+const pub=p=>`/repos/${cfg.owner}/${cfg.publicRepo}/contents/${p}`;
+const enc=s=>{const b=new TextEncoder().encode(s);return bytes64(b)};
+function bytes64(b){let s='';for(let i=0;i<b.length;i+=0x8000)s+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));return btoa(s)}
+const dec=b64=>new TextDecoder().decode(Uint8Array.from(atob(b64.replace(/\s/g,'')),c=>c.charCodeAt(0)));
+const fail=async(r,what)=>{let m='';try{m=(await r.json()).message}catch(e){}throw new Error(`${what} (${r.status}${m?': '+m:''})`)};
+
+/* ---- screens ---- */
+function renderSetup(msg){
   $('#who').hidden=true;
-  app.innerHTML=`<div class="box" style="max-width:460px"><h2 style="margin-top:0;font-size:20px">Sign in</h2>
-  <p class="meta">Enter your email and we will send you a sign-in link. No password.</p>
-  <form id="login"><label for="em">Email</label><input type="email" id="em" autocomplete="email" required>
-  <div class="row" style="margin-top:12px"><button class="btn primary" type="submit">Send me a link</button></div></form>
-  ${msg?`<p class="msg" style="margin-top:14px">${esc(msg)}</p>`:''}</div>`;
-  $('#login').onsubmit=async e=>{
-    e.preventDefault();const email=$('#em').value.trim();
-    const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+location.pathname}});
-    renderLogin(error?'Could not send the link: '+error.message:'Check your email and click the link. You can close this tab.');
+  app.innerHTML=`<div class="box" style="max-width:640px"><h2 style="margin-top:0;font-size:20px">Sign in with a GitHub token</h2>
+  <p class="meta">The token is saved only in this browser. It lets this page read the waiting list and publish approved cards.</p>
+  <ol><li>On GitHub, open Settings, Developer settings, Personal access tokens, <b>Fine-grained tokens</b>, then <b>Generate new token</b>.</li>
+  <li><b>Repository access:</b> only select repositories. Choose <code>${esc(cfg.publicRepo)}</code> and <code>${esc(cfg.inboxRepo)}</code>.</li>
+  <li><b>Permissions:</b> Repository permissions, <b>Contents: Read and write</b>. Nothing else.</li>
+  <li>Generate, copy the token, and paste it below.</li></ol>
+  <form id="tk"><label for="t">Token</label><input type="password" id="t" autocomplete="off" required>
+  <div class="row" style="margin-top:12px"><button class="btn primary" type="submit">Sign in</button></div></form>
+  ${msg?`<p class="msg err" style="margin-top:14px">${esc(msg)}</p>`:''}</div>`;
+  $('#tk').onsubmit=async e=>{e.preventDefault();token=$('#t').value.trim();
+    try{
+      for(const p of [pub('data'),inbox('')]){ // both repos must be reachable
+        const r=await api(p.replace(/\/$/,''));
+        if(r.status===401)throw new Error('GitHub did not accept that token.');
+        if(r.status===404&&p.includes(cfg.inboxRepo)){const rr=await api(`/repos/${cfg.owner}/${cfg.inboxRepo}`);if(!rr.ok)throw new Error('The token cannot see the inbox repo. Check the repository access.')}
+        else if(r.status===404&&p.includes('/data')){const rr=await api(`/repos/${cfg.owner}/${cfg.publicRepo}`);if(!rr.ok)throw new Error('The token cannot see the public repo. Check the repository access.')}
+        else if(r.status===403)throw new Error('The token does not have Contents permission.');
+      }
+      try{localStorage.setItem(KEY,token)}catch(e2){}
+      boot();
+    }catch(err){token='';renderSetup(err.message)}
   };
 }
-function renderNotAdmin(){
-  $('#who').hidden=false;$('#whoEmail').textContent=user.email;
-  app.innerHTML=`<div class="box"><p><b>You are signed in, but this account is not an admin yet.</b></p>
-  <p>In Supabase, open the SQL Editor and run:</p>
-  <p><code>insert into public.admins (user_id) select id from auth.users where email = '${esc(user.email)}';</code></p>
-  <p>Then reload this page.</p></div>`;
+
+/* ---- loading ---- */
+async function loadPending(){
+  const r=await api(inbox('submissions'));
+  if(r.status===404){pending=[];shas={};return}
+  if(!r.ok)await fail(r,'Could not read the waiting list');
+  const files=await r.json();shas={};files.forEach(f=>shas[f.name]=f.sha);
+  const ids=files.filter(f=>f.name.endsWith('.json')).map(f=>f.name.slice(0,-5));
+  const out=[];
+  for(const id of ids){
+    const rr=await api(inbox(`submissions/${id}.json`),{raw:true});
+    if(rr.ok)out.push(await rr.json());
+  }
+  pending=out.sort((a,b)=>String(b.created).localeCompare(String(a.created)));
+}
+async function getRecipes(){
+  const m=await api(pub('data/recipes.json'));
+  if(m.status===404)return {list:[],sha:null};
+  if(!m.ok)await fail(m,'Could not read the published recipes');
+  const meta=await m.json();
+  const raw=await api(pub('data/recipes.json'),{raw:true});
+  return {list:JSON.parse(await raw.text()||'[]'),sha:meta.sha};
+}
+async function putRecipes(list,sha,message){
+  const body={message,content:enc(JSON.stringify(list,null,2)+'\n')};if(sha)body.sha=sha;
+  const r=await api(pub('data/recipes.json'),{method:'PUT',body:JSON.stringify(body)});
+  if(r.status===409||r.status===422)throw new Error('Someone else changed the site at the same moment. Refresh and try again.');
+  if(!r.ok)await fail(r,'Could not publish');
+}
+async function loadAll(){
+  note('Loading...');
+  try{await loadPending();approved=(await getRecipes()).list;note('')}
+  catch(e){note(e.message,true);if(/401/.test(e.message)){token='';try{localStorage.removeItem(KEY)}catch(x){}renderSetup('The saved token no longer works. Paste a new one.')}}
 }
 
-async function load(){
-  const {data,error}=await sb.from('recipes').select('*').order('created_at',{ascending:false});
-  if(error){note('Could not load cards: '+error.message,true);rows=[];return}
-  rows=data;
-}
-const imgUrl=p=>sb.storage.from('cards').getPublicUrl(p).data.publicUrl;
-const count=s=>rows.filter(r=>r.status===s).length;
-
-function cardHTML(r){
-  const pic=r.image_path?`<img src="${esc(imgUrl(r.image_path))}" alt="Photo of the card for ${esc(r.title)}" loading="lazy">`
-    :`<div class="none">Typed in with no photo.</div>`;
-  const cats=TREE.map(([g,kids])=>kids.map(([id,l])=>`<label><input type="checkbox" name="cat" value="${id}" ${r.cats.includes(id)?'checked':''}> ${esc(g===l?l:g+': '+l)}</label>`).join('')).join('');
-  const when=new Date(r.created_at).toLocaleString();
+/* ---- list ---- */
+function cardHTML(r,state){
+  const pic=r.image?`<img data-img="${esc(r.image)}" data-state="${state}" alt="Photo of the card for ${esc(r.title)}">`:`<div class="none">Typed in with no photo.</div>`;
+  const cats=TREE.map(([g,kids])=>kids.map(([id,l])=>`<label><input type="checkbox" name="cat" value="${id}" ${(r.cats||[]).includes(id)?'checked':''}> ${esc(g===l?l:g+': '+l)}</label>`).join('')).join('');
+  const when=r.created||r.approved?new Date(r.created||r.approved).toLocaleString():'';
   let actions;
-  if(r.status==='pending')actions=`<button class="btn ok" data-act="approve">Approve</button><button class="btn" data-act="save">Save edits</button><button class="btn danger" data-act="reject">Reject</button>`;
-  else if(r.status==='approved')actions=`<button class="btn" data-act="save">Save edits</button><button class="btn" data-act="unpublish">Unpublish</button>`;
-  else actions=`<button class="btn" data-act="restore">Move back to pending</button>`+(confirming===r.id?`<button class="btn danger" data-act="delete">Yes, delete forever</button><button class="btn" data-act="cancel">Keep it</button>`:`<button class="btn danger" data-act="ask">Delete forever</button>`);
-  return `<article class="box card" data-card="${r.id}"><div class="pic">${pic}</div><div class="fields">
+  if(state==='pending')actions=`<button class="btn ok" data-act="approve">Approve and publish</button>`+(confirming===r.id?`<button class="btn danger" data-act="reject">Yes, reject and delete</button><button class="btn" data-act="cancel">Keep it</button>`:`<button class="btn danger" data-act="ask">Reject</button>`);
+  else actions=`<button class="btn" data-act="save">Save edits</button>`+(confirming===r.id?`<button class="btn danger" data-act="remove">Yes, remove from site</button><button class="btn" data-act="cancel">Keep it</button>`:`<button class="btn danger" data-act="ask">Remove from site</button>`);
+  return `<article class="box card" data-card="${esc(r.id)}"><div class="pic">${pic}</div><div class="fields">
     <div><label>Name of the recipe</label><input type="text" name="title" value="${esc(r.title)}"></div>
-    <div class="two"><div><label>Whose</label><input type="text" name="cook" value="${esc(r.cook)}"></div>
-      <div><label>Where</label><input type="text" name="place" value="${esc(r.place)}"></div>
+    <div class="two"><div><label>Whose</label><input type="text" name="by" value="${esc(r.by)}"></div>
+      <div><label>Where</label><input type="text" name="where" value="${esc(r.where)}"></div>
       <div><label>Year</label><input type="number" name="year" value="${esc(r.year)}"></div></div>
     <div><label>Ingredients, one per line</label><textarea name="ingredients">${esc((r.ingredients||[]).join('\n'))}</textarea></div>
     <div><label>Method</label><textarea name="method">${esc(r.method)}</textarea></div>
     <div><label>Categories</label><div class="cats">${cats}</div></div>
-    <p class="meta">Submitted ${esc(when)}${r.contact?' &middot; contact: '+esc(r.contact):''}</p>
+    <p class="meta">${state==='pending'?'Submitted':'Published'} ${esc(when)}${r.contact?' &middot; contact: '+esc(r.contact):''}</p>
     <div class="row">${actions}</div></div></article>`;
 }
 function render(){
-  $('#who').hidden=false;$('#whoEmail').textContent=user.email;
-  const tabs=[['pending','Waiting for approval'],['approved','Approved'],['rejected','Rejected']]
-    .map(([k,l])=>`<button class="tab" data-tab="${k}" aria-pressed="${tab===k}">${l} <b>${count(k)}</b></button>`).join('');
-  const list=rows.filter(r=>r.status===tab);
+  $('#who').hidden=false;
+  const tabs=[['pending','Waiting for approval',pending.length],['approved','Published',approved.length]]
+    .map(([k,l,n])=>`<button class="tab" data-tab="${k}" aria-pressed="${tab===k}">${l} <b>${n}</b></button>`).join('');
+  const list=tab==='pending'?pending:approved;
   app.innerHTML=`<div class="tabs">${tabs}<button class="tab" data-act="refresh">Refresh</button></div>`+
-    (list.length?list.map(cardHTML).join(''):`<p class="empty">${tab==='pending'?'Nothing waiting. New cards will show up here.':'Nothing here yet.'}</p>`);
+    (list.length?list.map(r=>cardHTML(r,tab)).join(''):`<p class="empty">${tab==='pending'?'Nothing waiting. New cards will show up here.':'No cards are published yet.'}</p>`);
+  hydrate();
+}
+async function hydrate(){
+  for(const img of document.querySelectorAll('img[data-img]')){
+    const name=img.dataset.img,state=img.dataset.state;
+    try{
+      if(!blobs[state+name]){
+        const r=await api(state==='pending'?inbox('submissions/'+name):pub(name),{raw:true});
+        if(!r.ok)continue;blobs[state+name]=URL.createObjectURL(await r.blob());
+      }
+      img.src=blobs[state+name];
+    }catch(e){}
+  }
 }
 
+/* ---- actions ---- */
 function collect(el){
   const v=n=>el.querySelector(`[name=${n}]`).value.trim();
-  return {title:v('title'),cook:v('cook')||null,place:v('place')||null,year:+v('year')||null,
+  return {title:v('title'),by:v('by'),where:v('where'),year:+v('year')||null,
     ingredients:v('ingredients').split('\n').map(s=>s.trim()).filter(Boolean),method:v('method')||null,
     cats:[...el.querySelectorAll('[name=cat]:checked')].map(x=>x.value)};
 }
-async function update(id,extra,okMsg,needsCats){
-  const el=document.querySelector(`[data-card="${id}"]`);const upd={...collect(el),...extra};
-  if(!upd.title){note('Give the recipe a name first.',true);return}
-  if(needsCats&&!upd.cats.length){note('Pick at least one category before approving.',true);return}
-  el.querySelectorAll('button').forEach(b=>b.disabled=true);
-  const {error}=await sb.from('recipes').update(upd).eq('id',id);
-  if(error){note('Could not save: '+error.message,true);el.querySelectorAll('button').forEach(b=>b.disabled=false);return}
-  note(okMsg);await load();render();
+const lock=(el,on)=>el.querySelectorAll('button').forEach(b=>b.disabled=on);
+async function delFile(repoPath,message){
+  const m=await api(repoPath);if(m.status===404)return;
+  const sha=(await m.json()).sha;
+  const r=await api(repoPath,{method:'DELETE',body:JSON.stringify({message,sha})});
+  if(!r.ok)await fail(r,'Could not delete a file');
 }
-async function destroy(id){
-  const r=rows.find(x=>x.id===id);
-  if(r.image_path)await sb.storage.from('cards').remove([r.image_path]);
-  const {error}=await sb.from('recipes').delete().eq('id',id);
-  confirming=null;
-  if(error){note('Could not delete: '+error.message,true);return}
-  note('Deleted.');await load();render();
+async function approve(id){
+  const el=document.querySelector(`[data-card="${id}"]`),p=pending.find(x=>x.id===id),f=collect(el);
+  if(!f.title)return note('Give the recipe a name first.',true);
+  if(!f.cats.length)return note('Pick at least one category before approving.',true);
+  lock(el,true);note('Publishing...');
+  try{
+    let image=null;
+    if(p.image){
+      const r=await api(inbox('submissions/'+p.image),{raw:true});
+      if(!r.ok)await fail(r,'Could not read the photo');
+      const b64=bytes64(new Uint8Array(await r.arrayBuffer()));
+      const path=`images/${id}.jpg`;
+      const put=await api(pub(path),{method:'PUT',body:JSON.stringify({message:`Add photo: ${f.title}`,content:b64})});
+      if(!put.ok&&put.status!==422)await fail(put,'Could not publish the photo');
+      image=path;
+    }
+    const {list,sha}=await getRecipes();
+    list.unshift({id,...f,manual:!image,image,approved:new Date().toISOString()});
+    await putRecipes(list,sha,`Approve: ${f.title}`);
+    await delFile(inbox(`submissions/${id}.json`),`Approved: ${f.title}`);
+    if(p.image)await delFile(inbox('submissions/'+p.image),`Approved: ${f.title}`);
+    await loadAll();render();note('Published. It will show on the site in a minute or two.');
+  }catch(e){note(e.message,true);lock(el,false)}
+}
+async function saveEdits(id){
+  const el=document.querySelector(`[data-card="${id}"]`),f=collect(el);
+  if(!f.title)return note('Give the recipe a name first.',true);
+  if(!f.cats.length)return note('Pick at least one category.',true);
+  lock(el,true);
+  try{
+    const {list,sha}=await getRecipes();const i=list.findIndex(x=>x.id===id);
+    if(i<0)throw new Error('That card is no longer published.');
+    list[i]={...list[i],...f};await putRecipes(list,sha,`Edit: ${f.title}`);
+    await loadAll();render();note('Saved. The site updates in a minute or two.');
+  }catch(e){note(e.message,true);lock(el,false)}
+}
+async function removeFromSite(id){
+  const el=document.querySelector(`[data-card="${id}"]`);lock(el,true);
+  try{
+    const {list,sha}=await getRecipes();const r=list.find(x=>x.id===id);
+    await putRecipes(list.filter(x=>x.id!==id),sha,`Remove: ${r?r.title:id}`);
+    if(r&&r.image)await delFile(pub(r.image),`Remove photo: ${r.title}`);
+    confirming=null;await loadAll();render();note('Removed from the site.');
+  }catch(e){note(e.message,true);lock(el,false)}
+}
+async function reject(id){
+  const el=document.querySelector(`[data-card="${id}"]`),p=pending.find(x=>x.id===id);lock(el,true);
+  try{
+    await delFile(inbox(`submissions/${id}.json`),`Rejected: ${p.title}`);
+    if(p.image)await delFile(inbox('submissions/'+p.image),`Rejected: ${p.title}`);
+    confirming=null;await loadAll();render();note('Rejected and deleted.');
+  }catch(e){note(e.message,true);lock(el,false)}
 }
 
-document.addEventListener('click',async e=>{
+document.addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;
+  if(b.id==='out'){token='';try{localStorage.removeItem(KEY)}catch(x){}renderSetup('');return}
   if(b.dataset.tab){tab=b.dataset.tab;confirming=null;note('');render();return}
-  if(b.id==='out'){await sb.auth.signOut();return}
   const a=b.dataset.act;if(!a)return;
-  if(a==='refresh'){await load();render();note('Refreshed.');return}
+  if(a==='refresh'){loadAll().then(render);return}
   const id=b.closest('[data-card]')?.dataset.card;if(!id)return;
-  if(a==='approve')update(id,{status:'approved'},'Approved. It is now visible on the site.',true);
-  else if(a==='save')update(id,{},'Saved.',tab==='approved');
-  else if(a==='reject')update(id,{status:'rejected'},'Rejected. It stays hidden.');
-  else if(a==='unpublish')update(id,{status:'pending'},'Moved back to waiting. It is hidden again.');
-  else if(a==='restore')update(id,{status:'pending'},'Moved back to waiting.');
+  if(a==='approve')approve(id);
+  else if(a==='save')saveEdits(id);
   else if(a==='ask'){confirming=id;render()}
   else if(a==='cancel'){confirming=null;render()}
-  else if(a==='delete')destroy(id);
+  else if(a==='reject')reject(id);
+  else if(a==='remove')removeFromSite(id);
 });
 
 async function boot(){
-  note('');
-  if(!user)return renderLogin();
-  const {data,error}=await sb.from('admins').select('user_id').eq('user_id',user.id);
-  if(error){note('Could not check admin access: '+error.message,true);return}
-  if(!data.length)return renderNotAdmin();
-  await load();render();
+  if(!cfg.owner||!cfg.publicRepo||!cfg.inboxRepo){app.innerHTML='<div class="box">config.js is missing the repository names.</div>';return}
+  if(!token)return renderSetup('');
+  await loadAll();if(token)render();
 }
-(async()=>{
-  if(!cfg.url||!cfg.anonKey||cfg.url.startsWith('YOUR_')){setupMissing();return}
-  sb=supabase.createClient(cfg.url,cfg.anonKey);
-  const {data:{session}}=await sb.auth.getSession();user=session?.user||null;
-  sb.auth.onAuthStateChange((_ev,s)=>{const next=s?.user||null;if((next?.id)!==(user?.id)){user=next;boot()}});
-  boot();
-})();
+boot();
 </script>
 </body>
 </html>

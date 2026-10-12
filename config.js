@@ -1,6 +1,8 @@
-// Supabase connection. The project URL and the "anon" (public) key are safe to keep in a public repo.
-// NEVER put the "service_role" key here or anywhere in this repo.
+// Site settings. Nothing secret goes in this file: the repo is public.
 window.AKT_CONFIG = {
-  url: 'YOUR_SUPABASE_URL',
-  anonKey: 'YOUR_SUPABASE_ANON_KEY'
+  owner: 'cakesnturbos',
+  publicRepo: 'arleneskitchentable',        // approved cards live here (data/recipes.json + images/)
+  inboxRepo: 'arleneskitchentable-inbox',   // PRIVATE repo: cards waiting for approval
+  submitUrl: '',                            // the Cloudflare Worker address, e.g. https://arlene-intake.YOURNAME.workers.dev
+  turnstileSiteKey: ''                      // optional: Cloudflare Turnstile site key (public) to block bots
 };

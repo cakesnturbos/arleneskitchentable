@@ -21,26 +21,36 @@ Made in memory of Arlene Petriella, who kept every glass topped off and laughed 
 - **Add a card.** Upload a photo and turn, flip or crop it, or skip the photo and type the recipe in. A **Speak** button lets someone say the ingredients and method out loud (it uses the browser's built-in voice typing, so it works in Chrome, Edge and Safari). Add a name, who wrote it, where and when, and pick categories.
 - **Little touches.** An "Arlene says" line and a photo of Arlene in the footer, and a squirrel that shows up now and then.
 
-## Status: prototype
+## How cards get on the site
 
-This is a working demo, not the finished site.
+GitHub is the database. There is no outside database service.
 
-- The cards you see are made-up samples.
-- Nothing added through "Add a card" is saved. It disappears when the page is closed.
-- Interpret shows pre-written readings for the sample cards. It does not read real photos yet.
-- The Print button opens a preview only.
+1. **Someone adds a card** on the site. The form sends it to a tiny free Cloudflare Worker ([`worker/worker.js`](worker/worker.js)).
+2. The Worker saves it in a **private inbox repo** (`arleneskitchentable-inbox`). Nothing is public yet.
+3. **Arlene's owner approves it** on [`admin.html`](admin.html): fix any words, pick categories, then Approve.
+4. Approving copies the card into this public repo: the record goes into [`data/recipes.json`](data/recipes.json) and the photo into `images/`. The site shows it a minute or two later.
 
-## What a real version needs
+Until the first real card is approved, the site shows made-up sample cards.
 
-- A place to store uploaded card photos and recipes.
-- A handwriting-reading service for Interpret, with a way for people to check and fix what it read.
-- A real print and PDF export.
-- Sign-up or review for uploads to keep spam out, and a simple way to remove a card on request.
-- A "family or personal card, not a published cookbook page" check on every upload.
+## Status
+
+- Working: browsing, the category tree, filters, the print previews, adding a card by photo, typing or voice, the admin page.
+- Not built yet: Interpret reading real photos (the admin types the words in while approving), real print and PDF export, and a way for people to ask for a card to be removed.
+- The Worker, the private inbox repo and the access tokens are set up by the owner. See the setup steps below.
+
+## Setup (one time)
+
+1. Create a **private** repo named `arleneskitchentable-inbox`.
+2. Create a free Cloudflare account, then Workers & Pages, Create, "Hello World". Paste in `worker/worker.js` and deploy.
+3. In the Worker's Settings, add the variables and secrets listed at the top of `worker/worker.js`. The `GH_TOKEN` secret is a GitHub fine-grained token for the **inbox repo only** (Contents: read and write).
+4. Put the Worker's address in `config.js` as `submitUrl`.
+5. For the admin page, create a fine-grained token for **both repos** (Contents: read and write). Paste it in on `admin.html`. It is saved only in that browser.
+
+Optional: add Cloudflare Turnstile (free) to block bots. Put its secret in the Worker and its site key in `config.js`.
 
 ## How it's built
 
-One file: [`index.html`](index.html). No build step, no framework, no ads, no trackers. Fonts come from Google Fonts. The `CNAME` file tells GitHub Pages which domain the site belongs to.
+One file: [`index.html`](index.html). No build step, no framework, no ads, no trackers. Fonts come from Google Fonts. Settings live in [`config.js`](config.js) (nothing secret: the repo is public).
 
 To view it on your computer, open `index.html` in a browser.
 

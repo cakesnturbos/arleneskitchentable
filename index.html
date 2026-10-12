@@ -217,13 +217,15 @@ fieldset{border:0;padding:0;margin:0}
   </div>
   <div class="foot"><svg class="sq" viewBox="0 0 48 48" fill="currentColor" aria-hidden="true"><path d="M14 40C2 36 2 14 14 8c6-3 11 1 9 6-2-3-5-2-6 2-2 6 1 15 7 18z"/><ellipse cx="26" cy="33" rx="9" ry="10"/><circle cx="34" cy="20" r="6.5"/><path d="M30.5 16 31.5 8.5 37 14z"/><circle cx="36.5" cy="19" r="1.3" fill="var(--bg)"/><circle cx="40.2" cy="21.5" r="1.2"/></svg>
     <div><p class="says" id="says"></p><p>For Arlene Petriella, who kept every glass topped off and laughed the whole time. Handwritten recipes, no ads, no one selling.</p>
-    <p>Prototype with made-up sample cards. Nothing you add here is saved, and Interpret shows pre-written readings.</p></div><figure class="polaroid" id="polaroid"></figure></div>
+    <p id="protonote"></p></div><figure class="polaroid" id="polaroid"></figure></div>
 </div>
 
 <div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="mtitle"><div class="mbox" id="mbox"></div></div>
 <div class="toast" id="toast" hidden role="status"></div>
 
+<script src="config.js"></script>
 <script>
+const cfg=window.AKT_CONFIG||{};
 const TREE=[
  {id:'meals',label:'Meals',kids:[{id:'breakfast',label:'Breakfast'},{id:'lunch',label:'Lunch'},{id:'dinner',label:'Dinner'}]},
  {id:'sweets',label:'Dessert',kids:[{id:'cakes',label:'Cakes'},{id:'cookies',label:'Cookies & Bars'},{id:'pies',label:'Pies & Pastries'},{id:'puddings',label:'Puddings & Custards'}]},
@@ -331,7 +333,7 @@ function handR(r,o){
     else wrap(r.suggest.note,30).forEach(l=>L.push(esc(l)))}
   return {paper:'notebook',font:'Caveat',fs:1.15,ink:'#1d2b57',title:r.title,lines:L,h:Math.round(L.length*6.4+9.6)};
 }
-const cap=r=>`${esc(r.by)} · ${esc(r.where)} · ${r.year}`;
+const cap=r=>[r.by,r.where,r.year].filter(Boolean).map(esc).join(' · ');
 
 function renderTree(){
   const n=id=>RECIPES.filter(r=>match(r,id)).length;
@@ -352,7 +354,7 @@ function renderBrowse(){
 }
 function typed(r,o){
   const d=(o.en&&r.en)?r.en:r,s=r.suggest;
-  let h=`<article class="typed"><h3>${esc(r.title)}</h3><p class="by">From ${esc(r.by)}, ${esc(r.where)}, about ${r.year}</p><h4>Ingredients</h4><ul>${d.ingredients.map(i=>`<li>${fmt(i)}</li>`).join('')}</ul><h4>Method</h4>`;
+  let h=`<article class="typed"><h3>${esc(r.title)}</h3><p class="by">${[r.by&&'From '+esc(r.by),r.where&&esc(r.where),r.year&&'about '+r.year].filter(Boolean).join(', ')}</p><h4>Ingredients</h4><ul>${d.ingredients.map(i=>`<li>${fmt(i)}</li>`).join('')}</ul><h4>Method</h4>`;
   h+=d.method?`<p>${fmt(d.method)}</p>`:'<p class="none">Nothing is written on the card.</p>';
   if(o.sug&&s)h+=`<div class="sug"><h4>Suggested, not on the original card</h4>${s.steps?`<ol>${s.steps.map(t=>`<li>${esc(t)}</li>`).join('')}</ol>`:`<p>${esc(s.note)}</p>`}</div>`;
   return h+'</article>';
@@ -362,7 +364,7 @@ function renderDetail(){
   let tools;
   if(S.reading===r.id)tools='<div class="reading"><span class="dots"><i></i><i></i><i></i></span>Reading the handwriting</div>';
   else if(r.manual)tools=typed(r,{en:false,sug:false});
-  else if(up)tools='<p class="hint" style="margin:0">On the live site, Interpret reads this photo for you. Here, type the ingredients and method when you add a card and they show up in the typed and handwriting versions.</p>';
+  else if(up)tools='<p class="hint" style="margin:0">This card has a photo but no typed words yet, so there is nothing to interpret. Once the ingredients and method are typed in, the typed and handwriting versions appear here.</p>';
   else if(!done)tools='<button class="btn primary" data-act="interpret">Interpret this card</button><p class="hint">Reads the handwriting and writes it out as a typed recipe. Your original stays as it is.</p>';
   else tools=`<div class="row" style="margin-bottom:12px"><button class="chip" aria-pressed="${S.look==='typed'}" data-act="look" data-v="typed">Typed</button><button class="chip" aria-pressed="${S.look==='hand'}" data-act="look" data-v="hand">Clear handwriting</button>${r.en?`<button class="chip" aria-pressed="${S.en}" data-act="en">English</button>`:''}</div>${S.look==='hand'?`<div class="cardwrap">${paper(handR(r,{en:S.en,sug:S.sug}))}</div><p class="hint">The same words as a clean copy in easy-to-read handwriting. Your original card stays as it is.</p>`:typed(r,{en:S.en,sug:S.sug})}
     <p class="legend"><mark>Underlined</mark> words were hard to read. Best guess shown.</p>
@@ -386,11 +388,14 @@ function renderAdd(){
   <div class="two"><div class="field"><label for="by">Whose handwriting</label><input type="text" id="by" placeholder="Name, or Unknown"></div>
   <div class="field"><label for="where">Where</label><input type="text" id="where" placeholder="City or region"></div></div>
   <div class="field" style="max-width:200px"><label for="year">About what year</label><input type="number" id="year" min="1800" max="2026" placeholder="1965"></div>
+  <div class="field"><label for="contact">Your email (optional)</label><input type="text" id="contact" autocomplete="email" inputmode="email" placeholder="Only used if we need to reach you about this card. Never shown."></div>
+  <div style="position:absolute;left:-9999px" aria-hidden="true"><input type="text" id="website" tabindex="-1" autocomplete="off"></div>
   <p class="hint" style="margin:0">No photo needed. Type the recipe, or tap Speak and say it out loud. Say &ldquo;new line&rdquo; between ingredients.</p>
   <div class="field"><div class="lab"><label for="ing">Ingredients, one per line</label><button type="button" class="btn mic" data-mic="ing" aria-pressed="false">Speak</button></div><textarea id="ing" placeholder="1 lb butter&#10;1 lb sugar&#10;10 eggs"></textarea></div>
   <div class="field"><div class="lab"><label for="meth">Method, if there is one</label><button type="button" class="btn mic" data-mic="meth" aria-pressed="false">Speak</button></div><textarea id="meth" placeholder="Leave empty if the card gives no instructions"></textarea></div>
   <fieldset class="field"><legend>Where does it belong? Pick as many as fit.</legend><div class="cats">${cats}</div></fieldset>
   <label class="chk"><input type="checkbox" id="rights"> This is a family or personal recipe, not copied from a published cookbook.</label>
+  <div id="ts"></div>
   <p class="err" id="err" hidden></p>
   <div class="row"><button type="submit" class="btn primary">Add to the drawer</button><button type="button" class="btn" data-act="back">Cancel</button></div>
   <p class="hint" style="margin:0">Photo details like location are removed before a card is shown. Cards can be removed on request.</p></form>`;
@@ -424,12 +429,25 @@ function renderAdd(){
       crop=n;drawBox()};
     cb.onpointerup=cb.onpointercancel=()=>{drag=null};
     apply()};fr.readAsDataURL(f)};
+  let tsToken='';
+  if(cfg.turnstileSiteKey){const go=()=>window.turnstile.render('#ts',{sitekey:cfg.turnstileSiteKey,callback:k=>{tsToken=k}});
+    if(window.turnstile)go();else{const s=document.createElement('script');s.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';s.onload=go;document.head.appendChild(s)}}
   $('#addForm').onsubmit=e=>{e.preventDefault();
     const t=$('#title').value.trim(),c=[...document.querySelectorAll('[name=cat]:checked')].map(x=>x.value),er=$('#err');
     const ingL=$('#ing').value.split('\n').map(x=>x.trim()).filter(Boolean);
     const m=!t?'Give the recipe a name.':(!img&&!ingL.length)?'Add a photo of the card, or type in the ingredients.':!c.length?'Pick at least one category.':!$('#rights').checked?'Please confirm this is a family or personal recipe.':'';
     if(m){er.textContent=m;er.hidden=false;return}
     const r={id:'u'+Date.now(),title:t,by:$('#by').value.trim()||'Unknown',where:$('#where').value.trim()||'Unknown',year:+$('#year').value||new Date().getFullYear(),cats:c,img,manual:!img,ingredients:ingL,method:$('#meth').value.trim()||null};r.noMethod=!r.method;
+    if(cfg.submitUrl){
+      if(cfg.turnstileSiteKey&&!tsToken){er.textContent='Please complete the check box first.';er.hidden=false;return}
+      const btn=$('#addForm button[type=submit]');btn.disabled=true;er.hidden=true;
+      const body={title:t,by:$('#by').value.trim(),where:$('#where').value.trim(),year:+$('#year').value||null,cats:c,ingredients:ingL,
+        method:r.method,contact:$('#contact').value.trim()||null,website:$('#website').value,turnstile:tsToken,image:img?img.split(',')[1]:null};
+      fetch(cfg.submitUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+        .then(res=>res.json().catch(()=>({})).then(j=>{if(!res.ok)throw new Error(j.error||'Something went wrong.');
+          S.view='browse';render();window.scrollTo(0,0);toast('Thank you! Your card is waiting for approval. Arlene is laughing.')}))
+        .catch(err=>{er.textContent='Could not send the card: '+err.message;er.hidden=false;btn.disabled=false});
+      return}
     RECIPES.unshift(r);S.view='detail';S.id=r.id;render();window.scrollTo(0,0);toast('Added. Arlene is laughing. (In this prototype it is only kept until you close the page.)')};
 }
 function render(){
@@ -484,10 +502,22 @@ document.addEventListener('click',e=>{
 document.addEventListener('change',e=>{if(e.target.id==='sugchk'){S.sug=e.target.checked;renderDetail()}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeM()});
 $('#q').addEventListener('input',e=>{S.q=e.target.value;if(S.view!=='browse'){S.view='browse';}render()});
-S.peek=pick(RECIPES).id;
-$('#says').textContent='Arlene says: “'+pick(SAYINGS)+'”';
-$('#polaroid').innerHTML=(PHOTOS.length?`<img src="${esc(pick(PHOTOS))}" alt="Arlene">`:'<div class="ph">A photo of Arlene goes here</div>')+'<figcaption>Arlene</figcaption>';
-render();
+/* Approved cards come from data/recipes.json. Until there is a real one, the sample cards are shown. */
+const toRecipe=x=>({id:x.id,title:x.title,by:x.by||'',where:x.where||'',year:x.year||'',cats:x.cats||[],img:x.image||null,
+  manual:!x.image,ingredients:x.ingredients||[],method:x.method||null,noMethod:!x.method});
+function start(live){
+  S.peek=pick(RECIPES).id;
+  const demo=cfg.submitUrl?'':'Adding a card is a demo for now and is not saved.';
+  $('#protonote').textContent=live?demo:('Sample cards are shown until the first real cards are approved. '+demo).trim();
+  $('#says').textContent='Arlene says: “'+pick(SAYINGS)+'”';
+  $('#polaroid').innerHTML=(PHOTOS.length?`<img src="${esc(pick(PHOTOS))}" alt="Arlene">`:'<div class="ph">A photo of Arlene goes here</div>')+'<figcaption>Arlene</figcaption>';
+  render();
+}
+fetch('data/recipes.json',{cache:'no-cache'}).then(r=>r.ok?r.json():[]).catch(()=>[]).then(list=>{
+  const live=Array.isArray(list)&&list.length>0;
+  if(live){RECIPES.length=0;list.forEach(x=>RECIPES.push(toRecipe(x)))}
+  start(live);
+});
 </script>
 </body>
 </html>
