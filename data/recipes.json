@@ -1,1 +1,19 @@
-[]
+[
+  {
+    "id": "mv5us2aw-2aa948d6",
+    "title": "test card",
+    "by": "",
+    "where": "",
+    "year": null,
+    "ingredients": [
+      "test"
+    ],
+    "method": null,
+    "cats": [
+      "breakfast"
+    ],
+    "manual": true,
+    "image": null,
+    "approved": "2026-10-12T23:09:01.519Z"
+  }
+]
