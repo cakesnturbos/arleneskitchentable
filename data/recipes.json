@@ -91,8 +91,8 @@
     "cats": [
       "cookies"
     ],
-    "manual": false,
-    "image": "images/mv5vjqb1-f0a9956a.jpg",
+    "manual": true,
+    "image": null,
     "approved": "2026-10-12T23:40:29.031Z"
   }
 ]
