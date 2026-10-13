@@ -1,5 +1,29 @@
 [
   {
+    "id": "mv6nulqa-9e320c4d",
+    "title": "Peanut Brittle",
+    "by": "Grandma Suzie",
+    "where": "",
+    "year": null,
+    "ingredients": [
+      "2/3 Cup Sugar",
+      "1 Cup corn syrup",
+      "1/2 Cup water",
+      "Add last....",
+      "1 Cup butter",
+      "2 Cups raw peanuts",
+      "1t Vanilla",
+      "1t soda"
+    ],
+    "method": "Mix wet, simmer till 280 degrees. Add peanuts, simmer till 300 degrees. Add butter,  vanilla, baking soda.  Pour in pan, let cool 30 min.",
+    "cats": [
+      "cookies"
+    ],
+    "manual": false,
+    "image": "images/mv6nulqa-9e320c4d.jpg",
+    "approved": "2026-10-13T19:27:11.453Z"
+  },
+  {
     "id": "mv6ktihh-3990879f",
     "title": "Russian tea cakes",
     "by": "Grandma Fratianne",
