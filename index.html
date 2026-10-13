@@ -360,7 +360,7 @@ function renderBrowse(){
   h+=chip('decade','all','Any decade',S.decade==='all');
   [1950,1960,1970,1980].forEach(d=>h+=chip('decade',d,d+'s',S.decade==d));
   h+=chip('few','1','Little or no instructions',S.few)+'</div>';
-  h+=list.length?'<div class="grid">'+list.map(r=>`<button class="item" data-open="${r.id}">${r.id===S.peek?SQ('peek',false,S.peekFace):''}<div class="cardwrap">${face(r)}</div><div class="cap"><b>${esc(r.title)}</b><span>${cap(r)}</span>${r.noMethod?'<br><span class="tag">Little or no instructions</span>':''}${r.img&&hasWords(r)?' <span class="tag">Photo of the original inside</span>':''}</div></button>`).join('')+'</div>':'<div class="empty">'+SQ('sq',Math.random()<.5,pick(FACES))+'<p style="margin:0">Nothing here but a squirrel. Try another search, category or decade.</p></div>';
+  h+=list.length?'<div class="grid">'+list.map(r=>`<button class="item" data-open="${r.id}">${r.id===S.peek?SQ('peek',false,S.peekFace):''}<div class="cardwrap">${face(r)}</div><div class="cap"><b>${esc(r.title)}</b><span>${cap(r)}</span></div></button>`).join('')+'</div>':'<div class="empty">'+SQ('sq',Math.random()<.5,pick(FACES))+'<p style="margin:0">Nothing here but a squirrel. Try another search, category or decade.</p></div>';
   $('#main').innerHTML=h;
 }
 function typed(r,o){
