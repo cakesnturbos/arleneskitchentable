@@ -1,5 +1,32 @@
 [
   {
+    "id": "mv6klexe-d2d5f62d",
+    "title": "Vegan brownies",
+    "by": "Jennifer Schlueter",
+    "where": "Akron",
+    "year": 2015,
+    "ingredients": [
+      "2 Cup all-purpose flour",
+      "2 Cup sugar",
+      "3/4 Cup of unsweetened cocoa",
+      "1.5 teaspoons of baking powder",
+      "1 teaspoon of salt",
+      "Mix together then add wet",
+      "1 Cup water",
+      "1/2 Canola oil",
+      "2 teaspoons vanilla"
+    ],
+    "method": "Bake for 50min in a 8x8 pan",
+    "cats": [
+      "cakes",
+      "thanksgiving",
+      "christmas"
+    ],
+    "manual": true,
+    "image": null,
+    "approved": "2026-10-13T11:02:37.721Z"
+  },
+  {
     "id": "mv5vjqb1-f0a9956a",
     "title": "Fudge balls",
     "by": "Jennifer",
