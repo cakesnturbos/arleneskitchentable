@@ -322,7 +322,7 @@ function filtered(){
     (!q||[r.title,r.by,r.where,...(r.ingredients||[])].join(' ').toLowerCase().includes(q)));
 }
 function paper(r){
-  if(!r.img&&!r.lines)r=handR(r,{});
+  if(!r.img&&!r.lines)r=styled(r);
   if(r.img)return `<div class="paper upload"><img src="${r.img}" alt="Photo of the handwritten card for ${esc(r.title)}"></div>`;
   const L=r.lines.map((t,i)=>`<div class="ln${i?'':' t'}">${t}</div>`).join('');
   return `<div class="paper ${r.paper}${r.stain?' stain':''}" role="img" aria-label="Handwritten ${r.paper==='notebook'?'notebook page':r.paper==='scrap'?'scrap of paper':'index card'}: ${esc(r.title)}" style="--fs:${r.fs};--ink-card:${r.ink};font-family:'${r.font}',cursive${r.h?`;aspect-ratio:100/${r.h}`:''}"><div class="sheet">${L}</div></div>`;
@@ -330,7 +330,21 @@ function paper(r){
 /* Front-page card: the recipe written out neatly, easy to read at a glance. The photo of the original shows when the card is opened.
    A photo-only card with no typed words still shows its photo. */
 const hasWords=r=>(r.ingredients&&r.ingredients.length)||r.method;
-const face=r=>r.img&&hasWords(r)?paper(handR(r,{})):paper(r);
+/* Each recipe gets its own paper, handwriting and ink, picked from its id so it always looks the same.
+   Mostly index cards, some paper scraps and notebook pages, an occasional coffee ring, and a slight tilt. */
+const hash=t=>{let h=0;for(const c of String(t))h=(h*31+c.charCodeAt(0))>>>0;return h};
+const PAPERS=['index','index','index','scrap','scrap','notebook'];
+const HANDS=[['Caveat',1.15],['Shadows Into Light',.95],['Covered By Your Grace',1.02],['Caveat',1.15]];
+const INKS=['#1d2b57','#243b8c','#2a2a2a','#5a3a22'];
+function styled(r){
+  const c=handR(r,{}),h=hash(r.id),n=c.lines.length;
+  c.paper=PAPERS[h%PAPERS.length];const [font,fs]=HANDS[(h>>>3)%HANDS.length];c.font=font;c.fs=fs;
+  c.ink=INKS[(h>>>6)%INKS.length];c.stain=c.paper!=='notebook'&&(h>>>9)%4===0;
+  c.h=c.paper==='index'?Math.round(n*6.2+6.5):c.paper==='scrap'?Math.round(n*6.8+12):Math.round(n*6.4+9.6);
+  return c;
+}
+const tilt=r=>((hash(r.id)>>>12)%5-2)*.5;
+const face=r=>{const t=tilt(r),inner=r.img&&hasWords(r)?paper(styled(r)):paper(r);return t?`<div style="transform:rotate(${t}deg)">${inner}</div>`:inner};
 /* Rewrites the typed reading as a clean handwritten notebook page */
 function handR(r,o){
   const d=(o.en&&r.en)?r.en:r,clean=s=>String(s).replace(/\{\?([^}]+)\}/g,'$1');
