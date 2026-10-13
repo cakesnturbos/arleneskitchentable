@@ -334,7 +334,7 @@ function handR(r,o){
   const wrap=(s,n)=>{const out=[];let cur='';clean(s).split(' ').forEach(w=>{if((cur+' '+w).trim().length>n){out.push(cur);cur=w}else cur=(cur+' '+w).trim()});if(cur)out.push(cur);return out};
   const L=[esc(r.title),'Ingredients:'];
   d.ingredients.forEach(i=>wrap(i,30).forEach((l,k)=>L.push((k?'  ':'&ndash; ')+esc(l))));
-  L.push('Method:');
+  L.push('Directions:');
   if(d.method)wrap(d.method,30).forEach(l=>L.push(esc(l)));else L.push('(none written)');
   if(o.sug&&r.suggest){L.push('Suggested:');
     if(r.suggest.steps)r.suggest.steps.forEach((t,n)=>wrap((n+1)+'. '+t,30).forEach((l,k)=>L.push((k?'  ':'')+esc(l))));
@@ -362,7 +362,7 @@ function renderBrowse(){
 }
 function typed(r,o){
   const d=(o.en&&r.en)?r.en:r,s=r.suggest;
-  let h=`<article class="typed"><h3>${esc(r.title)}</h3><p class="by">${[r.by&&'From '+esc(r.by),r.where&&esc(r.where),r.year&&'about '+r.year].filter(Boolean).join(', ')}</p><h4>Ingredients</h4><ul>${d.ingredients.map(i=>`<li>${fmt(i)}</li>`).join('')}</ul><h4>Method</h4>`;
+  let h=`<article class="typed"><h3>${esc(r.title)}</h3><p class="by">${[r.by&&'From '+esc(r.by),r.where&&esc(r.where),r.year&&'about '+r.year].filter(Boolean).join(', ')}</p><h4>Ingredients</h4><ul>${d.ingredients.map(i=>`<li>${fmt(i)}</li>`).join('')}</ul><h4>Directions</h4>`;
   h+=d.method?`<p>${fmt(d.method)}</p>`:'<p class="none">Nothing is written on the card.</p>';
   if(o.sug&&s)h+=`<div class="sug"><h4>Suggested, not on the original card</h4>${s.steps?`<ol>${s.steps.map(t=>`<li>${esc(t)}</li>`).join('')}</ol>`:`<p>${esc(s.note)}</p>`}</div>`;
   return h+'</article>';
@@ -372,11 +372,11 @@ function renderDetail(){
   let tools;
   if(S.reading===r.id)tools='<div class="reading"><span class="dots"><i></i><i></i><i></i></span>Reading the handwriting</div>';
   else if(r.manual)tools=typed(r,{en:false,sug:false});
-  else if(up)tools='<p class="hint" style="margin:0">This card has a photo but no typed words yet, so there is nothing to interpret. Once the ingredients and method are typed in, the typed and handwriting versions appear here.</p>';
+  else if(up)tools='<p class="hint" style="margin:0">This card has a photo but no typed words yet, so there is nothing to interpret. Once the ingredients and directions are typed in, the typed and handwriting versions appear here.</p>';
   else if(!done)tools='<button class="btn primary" data-act="interpret">Interpret this card</button><p class="hint">Reads the handwriting and writes it out as a typed recipe. Your original stays as it is.</p>';
   else tools=`<div class="row" style="margin-bottom:12px"><button class="chip" aria-pressed="${S.look==='typed'}" data-act="look" data-v="typed">Typed</button><button class="chip" aria-pressed="${S.look==='hand'}" data-act="look" data-v="hand">Clear handwriting</button>${r.en?`<button class="chip" aria-pressed="${S.en}" data-act="en">English</button>`:''}</div>${S.look==='hand'?`<div class="cardwrap">${paper(handR(r,{en:S.en,sug:S.sug}))}</div><p class="hint">The same words as a clean copy in easy-to-read handwriting. Your original card stays as it is.</p>`:typed(r,{en:S.en,sug:S.sug})}
     <p class="legend"><mark>Underlined</mark> words were hard to read. Best guess shown.</p>
-    ${r.suggest?`<label class="chk" style="margin-top:10px"><input type="checkbox" id="sugchk" ${S.sug?'checked':''}> Include the suggested ${r.suggest.steps?'method':'note'} (marked as not original)</label>`:''}`;
+    ${r.suggest?`<label class="chk" style="margin-top:10px"><input type="checkbox" id="sugchk" ${S.sug?'checked':''}> Include the suggested ${r.suggest.steps?'directions':'note'} (marked as not original)</label>`:''}`;
   $('#main').innerHTML=`<button class="back" data-act="back">← Back to the drawer</button>
   <div class="detail"><div class="orig"><div class="cardwrap">${paper(r)}</div><p class="note">${r.manual?'Typed in and shown as a card.':'The card as it was submitted.'} ${cap(r)}</p></div>
   <aside class="side"><div><h1>${esc(r.title)}</h1><p class="meta">${cap(r)}</p></div>
@@ -400,7 +400,7 @@ function renderAdd(){
   <div style="position:absolute;left:-9999px" aria-hidden="true"><input type="text" id="website" tabindex="-1" autocomplete="off"></div>
   <p class="hint" style="margin:0">No photo needed. Type the recipe, or tap Speak and say it out loud. Say &ldquo;new line&rdquo; between ingredients.</p>
   <div class="field"><div class="lab"><label for="ing">Ingredients, one per line</label><button type="button" class="btn mic" data-mic="ing" aria-pressed="false">Speak</button></div><textarea id="ing" placeholder="1 lb butter&#10;1 lb sugar&#10;10 eggs"></textarea></div>
-  <div class="field"><div class="lab"><label for="meth">Method, if there is one</label><button type="button" class="btn mic" data-mic="meth" aria-pressed="false">Speak</button></div><textarea id="meth" placeholder="Leave empty if the card gives no instructions"></textarea></div>
+  <div class="field"><div class="lab"><label for="meth">Directions, if there are any</label><button type="button" class="btn mic" data-mic="meth" aria-pressed="false">Speak</button></div><textarea id="meth" placeholder="Leave empty if the card gives no instructions"></textarea></div>
   <fieldset class="field"><legend>Where does it belong? Pick as many as fit.</legend><div class="cats">${cats}</div></fieldset>
   <label class="chk"><input type="checkbox" id="rights"> This is a family or personal recipe, not copied from a published cookbook.</label>
   <div id="ts"></div>

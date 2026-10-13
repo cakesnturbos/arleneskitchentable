@@ -15,10 +15,10 @@ Made in memory of Arlene Petriella, who kept every glass topped off and laughed 
 
 - **Handwritten cards come first.** Each recipe is shown as it was written: index cards, notebook pages, scraps of paper. Some have no instructions at all, and that's fine.
 - **Browse like a recipe box.** A category tree (Meals, Dessert, Breads, Holiday, Ethnic) plus filters for decade and "little or no instructions," and a search box.
-- **Interpret.** A button beside each card reads the handwriting and writes it out as a typed recipe. Words that were hard to read are underlined. If the card has no method, a clearly marked "suggested, not on the original card" method can be added.
+- **Interpret.** A button beside each card reads the handwriting and writes it out as a typed recipe. Words that were hard to read are underlined. If the card has no directions, clearly marked "suggested, not on the original card" directions can be added.
 - **Clear handwriting copy.** The typed words rewritten in an easy-to-read handwriting font.
 - **Print.** Print the card as is, the typed recipe, the clear handwriting copy, or both on one page.
-- **Add a card.** Upload a photo and turn, flip or crop it, or skip the photo and type the recipe in. A **Speak** button lets someone say the ingredients and method out loud (it uses the browser's built-in voice typing, so it works in Chrome, Edge and Safari). Add a name, who wrote it, where and when, and pick categories.
+- **Add a card.** Upload a photo and turn, flip or crop it, or skip the photo and type the recipe in. A **Speak** button lets someone say the ingredients and directions out loud (it uses the browser's built-in voice typing, so it works in Chrome, Edge and Safari). Add a name, who wrote it, where and when, and pick categories.
 - **Little touches.** An "Arlene says" line and a photo of Arlene in the footer, and a squirrel that shows up now and then.
 
 ## How cards get on the site

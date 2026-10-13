@@ -195,7 +195,7 @@ function cardHTML(r,state){
       <div><label>Where</label><input type="text" name="where" value="${esc(r.where)}"></div>
       <div><label>Year</label><input type="number" name="year" value="${esc(r.year)}"></div></div>
     <div><label>Ingredients, one per line</label><textarea name="ingredients">${esc((r.ingredients||[]).join('\n'))}</textarea></div>
-    <div><label>Method</label><textarea name="method">${esc(r.method)}</textarea></div>
+    <div><label>Directions</label><textarea name="method">${esc(r.method)}</textarea></div>
     <div><label>Categories</label><div class="cats">${cats}</div></div>
     <p class="meta">${state==='pending'?'Submitted':'Published'} ${esc(when)}${r.contact?' &middot; contact: '+esc(r.contact):''}</p>
     <div class="row">${actions}</div></div></article>`;
