@@ -162,7 +162,7 @@ label.chk input{margin-top:4px}
 .sheetpage{background:#fff;color:var(--paper-ink);aspect-ratio:8.5/11;max-width:100%;padding:6%;display:flex;flex-direction:column;gap:5%;box-shadow:0 0 0 1px var(--line),0 8px 24px rgba(0,0,0,.25);overflow:hidden}
 .sheetpage .typed{border:0;padding:0;font-size:clamp(11px,1.9vw,15px)}
 .sheetpage .paper{max-width:100%}
-.sheetpage.both .paper{max-width:62%;margin-inline:auto}
+.sheetpage.m-both .paper{max-width:62%;margin-inline:auto}
 
 /* add card */
 .form{max-width:720px;display:flex;flex-direction:column;gap:18px}
@@ -190,6 +190,21 @@ fieldset{border:0;padding:0;margin:0}
 :root[data-theme="dark"] .err{color:#FFB4AB}
 .toast{position:fixed;left:50%;bottom:max(20px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:8px;z-index:30;max-width:calc(100% - 32px);font-size:14.5px}
 .toast[hidden]{display:none}
+/* Printing: only the print preview sheet goes to paper. The paper lines and colors print as shown. */
+@page{margin:.5in}
+@media print{
+  body.printing{background:#fff!important;padding:0!important}
+  body.printing>*:not(#modal){display:none!important}
+  body.printing #modal{position:static;display:block!important;background:none;padding:0;overflow:visible}
+  body.printing .mbox{width:100%;max-width:none;padding:0;background:none;border-radius:0;box-shadow:none}
+  body.printing .mbox header,body.printing .mbox .hint{display:none}
+  body.printing .sheetpage{aspect-ratio:auto;padding:0;box-shadow:none;overflow:visible;gap:28px}
+  body.printing .sheetpage .typed{font-size:13pt;border:0;padding:0}
+  body.printing .sheetpage .paper{max-width:6.5in;margin-inline:auto;break-inside:avoid}
+  body.printing .sheetpage.m-both .paper{max-width:4.5in}
+  body.printing .cardwrap{filter:none!important;transform:none!important}
+  body.printing .paper,body.printing .sheet,body.printing .typed mark{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
 /* Thank-you pop-up: a jolly woman laughing after someone sends a card */
 .thanks{position:fixed;inset:0;z-index:40;background:rgba(43,33,24,.55);display:grid;place-items:center;padding:16px}
 .thanks[hidden]{display:none}
@@ -521,11 +536,12 @@ function openPrint(mode){
   const r=find(S.id),o={en:S.en,sug:S.sug};
   const label={photo:'The card as is',typed:'Typed recipe',hand:'Clear handwriting copy',both:'Both on one page'}[mode];
   const body=mode==='hand'?`<div class="cardwrap" style="filter:none">${paper(handR(r,o))}</div>`:mode==='photo'?`<div class="cardwrap" style="filter:none">${paper(r)}</div>`:mode==='typed'?typed(r,o):`${paper(r)}${typed(r,o)}`;
-  $('#mbox').innerHTML=`<header><h2 id="mtitle">Print preview: ${label}</h2><div class="row"><button class="btn primary" data-act="doprint">Print</button><button class="btn" data-act="closem">Close</button></div></header><div class="sheetpage ${mode}">${body}</div>
-  <p class="hint">The live site would open your printer here. Letter size shown; A4 is supported too.</p>`;
+  $('#mbox').innerHTML=`<header><h2 id="mtitle">Print preview: ${label}</h2><div class="row"><button class="btn primary" data-act="doprint">Print</button><button class="btn" data-act="closem">Close</button></div></header><div class="sheetpage m-${mode}">${body}</div>
+  <p class="hint">Prints just this page: no menus, buttons or squirrels. Pick Letter or A4 in your printer settings.</p>`;
   $('#modal').hidden=false;$('#mbox').querySelector('.btn.primary').focus();
 }
 const closeM=()=>{$('#modal').hidden=true};
+window.addEventListener('afterprint',()=>document.body.classList.remove('printing'));
 
 document.addEventListener('click',e=>{
   if(e.target.id==='thanks'||e.target.id==='thanksOk'){hideThanks();return}
@@ -541,7 +557,7 @@ document.addEventListener('click',e=>{
   else if(a==='en'){S.en=!S.en;render()}
   else if(a==='look'){S.look=t.dataset.v;render()}
   else if(a==='closem')closeM();
-  else if(a==='doprint'){toast('Prototype only. The live site would send this to your printer.')}
+  else if(a==='doprint'){document.body.classList.add('printing');setTimeout(()=>window.print(),50)}
   else if(t.id==='home'){S.view='browse';S.node='all';S.q='';$('#q').value='';S.decade='all';S.few=false;render();window.scrollTo(0,0)}
   else if(t.id==='addBtn'){S.view='add';render();window.scrollTo(0,0)}
   else if(t.id==='browseBtn'){const o=document.body.classList.toggle('tree-open');t.setAttribute('aria-expanded',o)}
