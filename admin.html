@@ -53,12 +53,22 @@ textarea{min-height:96px;resize:vertical;line-height:1.45}
 code{background:var(--soft);padding:1px 6px;border-radius:4px;font-size:.92em;word-break:break-all}
 ol{padding-left:20px}
 @media (max-width:700px){.card{grid-template-columns:minmax(0,1fr)}}
+.pictools{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.pictools .btn{padding:6px 12px;font-size:14.5px}
+.ask{background:var(--soft);border-radius:8px;padding:10px 12px;margin-top:10px;font-size:14.5px;display:flex;flex-direction:column;gap:8px}
+.ed .cw{position:relative;line-height:0;touch-action:none;user-select:none;border-radius:4px;overflow:hidden}
+.ed .cw img{display:block;width:100%;border:0}
+.cbox{position:absolute;border:2px solid var(--accent);box-shadow:0 0 0 999px rgba(0,0,0,.5);cursor:move;touch-action:none}
+.cbox i{position:absolute;width:24px;height:24px;background:var(--accent);border:2px solid #fff;border-radius:50%}
+.cbox i[data-h=nw]{top:-2px;left:-2px;cursor:nwse-resize}.cbox i[data-h=ne]{top:-2px;right:-2px;cursor:nesw-resize}
+.cbox i[data-h=sw]{bottom:-2px;left:-2px;cursor:nesw-resize}.cbox i[data-h=se]{bottom:-2px;right:-2px;cursor:nwse-resize}
+.ed p{margin:8px 0 0;font-size:14px;color:var(--muted)}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <div><h1>Arlene's Kitchen Table</h1><small>Admin: approve cards before anyone else sees them</small></div>
+    <div><h1>Arlene's Kitchen Table</h1><small>Admin: approve cards, fix their words and photos</small></div>
     <div class="row" id="who" hidden><button class="btn" id="out">Forget my token on this device</button></div>
   </header>
   <div id="note" class="msg" hidden role="status"></div>
@@ -80,6 +90,7 @@ const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&g
 const app=$('#app');
 const KEY='akt_admin_token';
 let token='',pending=[],approved=[],tab='pending',confirming=null,shas={};
+let editing=null,askPic=null,ED=null; /* photo tools: which card is being cropped, which is asking to delete its photo */
 const blobs={};
 
 function note(t,err){const n=$('#note');n.textContent=t;n.className='msg'+(err?' err':'');n.hidden=!t}
@@ -163,7 +174,16 @@ async function loadAll(){
 
 /* ---- list ---- */
 function cardHTML(r,state){
-  const pic=r.image?`<img data-img="${esc(r.image)}" data-state="${state}" alt="Photo of the card for ${esc(r.title)}">`:`<div class="none">Typed in with no photo.</div>`;
+  let pic=r.image?`<img data-img="${esc(r.image)}" data-state="${state}" alt="Photo of the card for ${esc(r.title)}">`:`<div class="none">Typed in with no photo.</div>`;
+  if(r.image&&editing===r.id)pic=`<div class="ed" id="ed"><div class="cw"><img class="pv" alt="Photo being edited" draggable="false"><div class="cbox" hidden><i data-h="nw"></i><i data-h="ne"></i><i data-h="sw"></i><i data-h="se"></i></div></div>
+    <div class="pictools et"><button class="btn" data-act="rl">Turn left</button><button class="btn" data-act="rr">Turn right</button><button class="btn" data-act="cr">Crop</button><button class="btn" data-act="rs">Start over</button></div>
+    <div class="pictools ec" hidden><button class="btn primary" data-act="ca">Apply crop</button><button class="btn" data-act="cc">Cancel crop</button></div>
+    <p class="eh">Drag the corners, or drag the box to move it.</p>
+    <div class="pictools"><button class="btn ok" data-act="savepic">Save photo</button><button class="btn" data-act="closepic">Cancel</button></div></div>`;
+  else if(r.image){
+    pic+=`<div class="pictools"><button class="btn" data-act="editpic">Crop or turn</button><button class="btn danger" data-act="askpic">Delete photo</button></div>`;
+    if(askPic===r.id)pic+=`<div class="ask" role="alert"><span><b>Delete this photo?</b> The typed recipe stays${state==='approved'?' on the site':''}. The photo cannot be brought back.</span><div class="row"><button class="btn danger" data-act="delpic">Yes, delete the photo</button><button class="btn" data-act="keeppic">Keep it</button></div></div>`;
+  }
   const cats=TREE.map(([g,kids])=>kids.map(([id,l])=>`<label><input type="checkbox" name="cat" value="${id}" ${(r.cats||[]).includes(id)?'checked':''}> ${esc(g===l?l:g+': '+l)}</label>`).join('')).join('');
   const when=r.created||r.approved?new Date(r.created||r.approved).toLocaleString():'';
   let actions;
@@ -200,6 +220,84 @@ async function hydrate(){
       img.src=blobs[state+name];
     }catch(e){}
   }
+  if(editing){const r=(tab==='pending'?pending:approved).find(x=>x.id===editing),src=r&&blobs[tab+r.image];if(src)startEditor(src);else note('Could not load that photo to edit.',true)}
+}
+
+/* ---- photo editor: turn and crop, all in the browser ---- */
+function startEditor(src){
+  const host=$('#ed');if(!host)return;
+  const q=x=>host.querySelector(x),cb=q('.cbox'),clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+  ED={orig:src,src,rot:0,crop:null,drag:null,out:null,changed:false};
+  q('.eh').hidden=true;
+  ED.apply=()=>{const im=new Image();im.onload=()=>{
+    const w=im.naturalWidth,h=im.naturalHeight,t=ED.rot%2,c=document.createElement('canvas');
+    c.width=t?h:w;c.height=t?w:h;const x=c.getContext('2d');x.translate(c.width/2,c.height/2);x.rotate(ED.rot*Math.PI/2);x.drawImage(im,-w/2,-h/2);
+    ED.out=c.toDataURL('image/jpeg',.9);q('.pv').src=ED.out};im.src=ED.src};
+  const box=()=>{const c=ED.crop;cb.style.left=c.x*100+'%';cb.style.top=c.y*100+'%';cb.style.width=c.w*100+'%';cb.style.height=c.h*100+'%'};
+  const endCrop=()=>{cb.hidden=true;q('.et').hidden=false;q('.ec').hidden=true;q('.eh').hidden=true;ED.drag=null};
+  ED.act=a=>{
+    if(a==='rl'){ED.rot=(ED.rot+3)%4;ED.changed=true;ED.apply()}
+    else if(a==='rr'){ED.rot=(ED.rot+1)%4;ED.changed=true;ED.apply()}
+    else if(a==='rs'){ED.src=ED.orig;ED.rot=0;ED.changed=false;ED.apply()}
+    else if(a==='cr'){ED.crop={x:.06,y:.06,w:.88,h:.88};cb.hidden=false;q('.et').hidden=true;q('.ec').hidden=false;q('.eh').hidden=false;box()}
+    else if(a==='cc')endCrop();
+    else if(a==='ca'){const im=new Image();im.onload=()=>{const W=im.naturalWidth,H=im.naturalHeight,k=ED.crop,c=document.createElement('canvas');c.width=Math.round(W*k.w);c.height=Math.round(H*k.h);
+      c.getContext('2d').drawImage(im,W*k.x,H*k.y,W*k.w,H*k.h,0,0,c.width,c.height);ED.src=c.toDataURL('image/jpeg',.92);ED.rot=0;ED.changed=true;endCrop();ED.apply()};im.src=ED.out}
+  };
+  cb.onpointerdown=e=>{e.preventDefault();cb.setPointerCapture(e.pointerId);ED.drag={h:e.target.dataset.h||'move',x:e.clientX,y:e.clientY,c:{...ED.crop}}};
+  cb.onpointermove=e=>{const d=ED.drag;if(!d)return;const r=q('.cw').getBoundingClientRect(),dx=(e.clientX-d.x)/r.width,dy=(e.clientY-d.y)/r.height,c=d.c,h=d.h,n={...c},m=.08;
+    if(h==='move'){n.x=clamp(c.x+dx,0,1-c.w);n.y=clamp(c.y+dy,0,1-c.h)}
+    else{if(h.includes('w')){const x=clamp(c.x+dx,0,c.x+c.w-m);n.w=c.x+c.w-x;n.x=x}
+      if(h.includes('e'))n.w=clamp(c.w+dx,m,1-c.x);
+      if(h.includes('n')){const y=clamp(c.y+dy,0,c.y+c.h-m);n.h=c.y+c.h-y;n.y=y}
+      if(h.includes('s'))n.h=clamp(c.h+dy,m,1-c.y)}
+    ED.crop=n;box()};
+  cb.onpointerup=cb.onpointercancel=()=>{ED.drag=null};
+  ED.apply();
+}
+const b64of=dataUrl=>dataUrl.split(',')[1];
+async function savePhoto(id){
+  if(!ED||!ED.changed){editing=null;render();return}
+  const el=document.querySelector(`[data-card="${id}"]`);lock(el,true);note('Saving the photo...');
+  try{
+    if(tab==='approved'){
+      const {list,sha}=await getRecipes(),i=list.findIndex(x=>x.id===id);
+      if(i<0)throw new Error('That card is no longer published.');
+      const old=list[i].image,path=`images/${id}-${Date.now().toString(36)}.jpg`;
+      const put=await api(pub(path),{method:'PUT',body:JSON.stringify({message:`New photo: ${list[i].title}`,content:b64of(ED.out)})});
+      if(!put.ok)await fail(put,'Could not upload the photo');
+      list[i]={...list[i],image:path,manual:false};
+      await putRecipes(list,sha,`Edit photo: ${list[i].title}`);
+      if(old&&old!==path)await delFile(pub(old),`Remove old photo: ${list[i].title}`);
+    }else{
+      const p=pending.find(x=>x.id===id),path=inbox('submissions/'+p.image);
+      const m=await api(path);if(!m.ok)await fail(m,'Could not find the photo');
+      const put=await api(path,{method:'PUT',body:JSON.stringify({message:`Edit photo: ${p.title}`,content:b64of(ED.out),sha:(await m.json()).sha})});
+      if(!put.ok)await fail(put,'Could not save the photo');
+      delete blobs['pending'+p.image];
+    }
+    editing=null;ED=null;await loadAll();render();note(tab==='approved'?'Photo saved. The site updates in a minute or two.':'Photo saved.');
+  }catch(e){note(e.message,true);lock(el,false)}
+}
+async function deletePhoto(id){
+  const el=document.querySelector(`[data-card="${id}"]`);lock(el,true);note('Deleting the photo...');
+  try{
+    if(tab==='approved'){
+      const {list,sha}=await getRecipes(),i=list.findIndex(x=>x.id===id);
+      if(i<0)throw new Error('That card is no longer published.');
+      const old=list[i].image;list[i]={...list[i],image:null,manual:true};
+      await putRecipes(list,sha,`Delete photo: ${list[i].title}`);
+      if(old)await delFile(pub(old),`Delete photo: ${list[i].title}`);
+    }else{
+      const p=pending.find(x=>x.id===id),jp=inbox(`submissions/${id}.json`);
+      const m=await api(jp);if(!m.ok)await fail(m,'Could not read that card');
+      const meta=await m.json(),rec=JSON.parse(dec(meta.content));rec.image=null;
+      const put=await api(jp,{method:'PUT',body:JSON.stringify({message:`Delete photo: ${p.title}`,content:enc(JSON.stringify(rec,null,2)),sha:meta.sha})});
+      if(!put.ok)await fail(put,'Could not update that card');
+      if(p.image)await delFile(inbox('submissions/'+p.image),`Delete photo: ${p.title}`);
+    }
+    askPic=null;await loadAll();render();note(tab==='approved'?'Photo deleted. The typed recipe stays on the site.':'Photo deleted.');
+  }catch(e){note(e.message,true);lock(el,false)}
 }
 
 /* ---- actions ---- */
@@ -273,10 +371,17 @@ async function reject(id){
 document.addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;
   if(b.id==='out'){token='';try{localStorage.removeItem(KEY)}catch(x){}renderSetup('');return}
-  if(b.dataset.tab){tab=b.dataset.tab;confirming=null;note('');render();return}
+  if(b.dataset.tab){tab=b.dataset.tab;confirming=null;editing=null;askPic=null;note('');render();return}
   const a=b.dataset.act;if(!a)return;
   if(a==='refresh'){loadAll().then(render);return}
   const id=b.closest('[data-card]')?.dataset.card;if(!id)return;
+  if(['rl','rr','cr','cc','ca','rs'].includes(a)){ED&&ED.act(a);return}
+  if(a==='editpic'){editing=id;askPic=null;confirming=null;render();return}
+  if(a==='closepic'){editing=null;ED=null;render();return}
+  if(a==='savepic'){savePhoto(id);return}
+  if(a==='askpic'){askPic=id;editing=null;render();return}
+  if(a==='keeppic'){askPic=null;render();return}
+  if(a==='delpic'){deletePhoto(id);return}
   if(a==='approve')approve(id);
   else if(a==='save')saveEdits(id);
   else if(a==='ask'){confirming=id;render()}
