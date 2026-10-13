@@ -324,6 +324,10 @@ function paper(r){
   const L=r.lines.map((t,i)=>`<div class="ln${i?'':' t'}">${t}</div>`).join('');
   return `<div class="paper ${r.paper}${r.stain?' stain':''}" role="img" aria-label="Handwritten ${r.paper==='notebook'?'notebook page':r.paper==='scrap'?'scrap of paper':'index card'}: ${esc(r.title)}" style="--fs:${r.fs};--ink-card:${r.ink};font-family:'${r.font}',cursive${r.h?`;aspect-ratio:100/${r.h}`:''}"><div class="sheet">${L}</div></div>`;
 }
+/* Front-page card: the recipe written out neatly, easy to read at a glance. The photo of the original shows when the card is opened.
+   A photo-only card with no typed words still shows its photo. */
+const hasWords=r=>(r.ingredients&&r.ingredients.length)||r.method;
+const face=r=>r.img&&hasWords(r)?paper(handR(r,{})):paper(r);
 /* Rewrites the typed reading as a clean handwritten notebook page */
 function handR(r,o){
   const d=(o.en&&r.en)?r.en:r,clean=s=>String(s).replace(/\{\?([^}]+)\}/g,'$1');
@@ -353,7 +357,7 @@ function renderBrowse(){
   h+=chip('decade','all','Any decade',S.decade==='all');
   [1950,1960,1970,1980].forEach(d=>h+=chip('decade',d,d+'s',S.decade==d));
   h+=chip('few','1','Little or no instructions',S.few)+'</div>';
-  h+=list.length?'<div class="grid">'+list.map(r=>`<button class="item" data-open="${r.id}">${r.id===S.peek?SQ('peek',false,S.peekFace):''}<div class="cardwrap">${paper(r)}</div><div class="cap"><b>${esc(r.title)}</b><span>${cap(r)}</span>${r.noMethod?'<br><span class="tag">Little or no instructions</span>':''}</div></button>`).join('')+'</div>':'<div class="empty">'+SQ('sq',Math.random()<.5,pick(FACES))+'<p style="margin:0">Nothing here but a squirrel. Try another search, category or decade.</p></div>';
+  h+=list.length?'<div class="grid">'+list.map(r=>`<button class="item" data-open="${r.id}">${r.id===S.peek?SQ('peek',false,S.peekFace):''}<div class="cardwrap">${face(r)}</div><div class="cap"><b>${esc(r.title)}</b><span>${cap(r)}</span>${r.noMethod?'<br><span class="tag">Little or no instructions</span>':''}${r.img&&hasWords(r)?' <span class="tag">Photo of the original inside</span>':''}</div></button>`).join('')+'</div>':'<div class="empty">'+SQ('sq',Math.random()<.5,pick(FACES))+'<p style="margin:0">Nothing here but a squirrel. Try another search, category or decade.</p></div>';
   $('#main').innerHTML=h;
 }
 function typed(r,o){
