@@ -1,5 +1,34 @@
 [
   {
+    "id": "mvh076nk-62e15e6f",
+    "title": "Sweet Potato Casserole",
+    "by": "Chicken Grandma",
+    "where": "Tennessee",
+    "year": 1950,
+    "ingredients": [
+      "2 (18oz) cans sweet potatoes or yams (drained & mashed)",
+      "1 Cup Sugar",
+      "2 Eggs",
+      "1/2 Cup Milk",
+      "1/2 tsp salt",
+      "1/3 Stick of butter",
+      "1 tsp vanilla",
+      "Topping:",
+      "1 Cup brown sugar",
+      "1/2 Cup flour",
+      "1/3 Cup melted butter",
+      "1 Cup chopped pecans"
+    ],
+    "method": "Mix together topping and crumble over yams.  Bake for 45 min at 350.",
+    "cats": [
+      "thanksgiving",
+      "christmas"
+    ],
+    "manual": true,
+    "image": null,
+    "approved": "2026-10-20T18:22:31.434Z"
+  },
+  {
     "id": "mvh0f8v1-ea5d9247",
     "title": "Judy's Chicken Thing Casserole",
     "by": "",
