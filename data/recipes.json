@@ -1,5 +1,32 @@
 [
   {
+    "id": "mvgy9f1z-70984ffa",
+    "title": "Traditional Banana Bread",
+    "by": "",
+    "where": "",
+    "year": null,
+    "ingredients": [
+      "3 Medium overripe bananas",
+      "1/3 Cup sugar",
+      "1/3 Cup Brown sugar",
+      "1/3 Cup Canola oil",
+      "2 teaspoons vanilla",
+      "2 Cups of flour",
+      "1 teaspoon baking soda",
+      "1 teaspoon ground cinnamon",
+      "1 teaspoon salt",
+      "1 Cup chopped nuts (chocolate chips, pumpkin seeds, pecans)"
+    ],
+    "method": "Smash bananas in mixer, then add sugar, brown sugar, oil and vanilla. Mix well.  Add flour, baking soda, cinnamon and salt.  Mix till combined. Fold in any add in's.  Bake for 55 min at 350 in parchment lined, or greased loaf pan.",
+    "cats": [
+      "breakfast",
+      "breads"
+    ],
+    "manual": true,
+    "image": null,
+    "approved": "2026-10-20T18:07:29.236Z"
+  },
+  {
     "id": "mvgsns3p-924a510d",
     "title": "PB Pumpkin Dog treats",
     "by": "",
