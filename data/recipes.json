@@ -1,5 +1,28 @@
 [
   {
+    "id": "mvh0f8v1-ea5d9247",
+    "title": "Judy's Chicken Thing Casserole",
+    "by": "",
+    "where": "Avon ohio",
+    "year": 1980,
+    "ingredients": [
+      "1lb Boneless chicken (pre- cooked, bite sized)",
+      "1 can of Cream of chicken soup",
+      "1 can Cream of celery soup",
+      "8oz sour cream",
+      "1 large onion (diced)",
+      "1 Box stovetop stuffing"
+    ],
+    "method": "Line an 8x11 greased casserole dish with chicken. Mix together soup, sour cream and diced onion. Pour over chicken.  Top with 1 box of stovetop stuffing. Bake for 20 minutes at 325.",
+    "cats": [
+      "thanksgiving",
+      "christmas"
+    ],
+    "manual": true,
+    "image": null,
+    "approved": "2026-10-20T18:22:14.896Z"
+  },
+  {
     "id": "mvgxyxy1-356ed4b8",
     "title": "Vanilla Scones",
     "by": "",
