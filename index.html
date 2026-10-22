@@ -6,21 +6,16 @@
 <title>Arlene's Kitchen Table</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@500&family=Covered+By+Your+Grace&family=Figtree:wght@400;500;600&family=Nothing+You+Could+Do&family=Reenie+Beanie&family=Shadows+Into+Light&family=Special+Elite&family=Bevan&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@500&family=Covered+By+Your+Grace&family=Figtree:wght@400;500;600&family=Nothing+You+Could+Do&family=Reenie+Beanie&family=Shadows+Into+Light&family=Special+Elite&family=Bevan&family=Yellowtail&family=Righteous&display=swap">
 <style>
 /* Layout: sticky top bar, category tree on the left, masonry of cards on the right. A card opens into the original on the left and a tools panel (Interpret, Print) on the right. */
 :root{
-  --bg:#F1E8D2; --surface:#FFFBF0; --ink:#2B2118; --muted:#6B5B4B; --line:#D6C7A4;
-  --accent:#A5332A; --accent-ink:#FFFFFF; --soft:#EBDCB8; --mark:#FFE9A8; --mark-ink:#4A3300;
-  --paper-ink:#222222; --linen:rgba(120,90,40,.06);
-  --display:'Bevan',Georgia,serif; --body:'Figtree',system-ui,sans-serif; --typed:'Special Elite','Courier New',monospace;
+  --bg:#FDF6E8; --surface:#FFFFFF; --ink:#1E2A2A; --muted:#4F6462; --line:#9FD3C7;
+  --accent:#C8262D; --accent-ink:#FFFFFF; --soft:#D9F0E9; --mark:#FFE9A8; --mark-ink:#4A3300;
+  --paper-ink:#222222; --linen:transparent; --chrome:#1E2A2A; --mint:#A8DDCF;
+  --display:'Righteous','Arial Rounded MT Bold',sans-serif; --body:'Figtree',system-ui,sans-serif; --typed:'Special Elite','Courier New',monospace;
+  color-scheme:light;
 }
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#1F1914; --surface:#2B231C; --ink:#F1E6D2; --muted:#B9A78F; --line:#443830;
-  --accent:#E8907F; --accent-ink:#2A140F; --soft:#3B2F25; --linen:rgba(255,230,180,.04); --mark:#6B5710; --mark-ink:#FFF1C4; color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#1F1914; --surface:#2B231C; --ink:#F1E6D2; --muted:#B9A78F; --line:#443830;
-  --accent:#E8907F; --accent-ink:#2A140F; --soft:#3B2F25; --linen:rgba(255,230,180,.04); --mark:#6B5710; --mark-ink:#FFF1C4; color-scheme:dark}
 *{box-sizing:border-box}
 body{margin:0}
 img{max-width:100%}
@@ -186,8 +181,6 @@ fieldset{border:0;padding:0;margin:0}
 .cats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px 20px;margin-top:8px}
 .cats div b{font-size:13px;color:var(--muted);display:block;margin-bottom:2px}
 .err{color:#B3261E;font-size:14px;margin:0}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .err{color:#FFB4AB}}
-:root[data-theme="dark"] .err{color:#FFB4AB}
 .toast{position:fixed;left:50%;bottom:max(20px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:8px;z-index:30;max-width:calc(100% - 32px);font-size:14.5px}
 .toast[hidden]{display:none}
 /* Printing: only the print preview sheet goes to paper. The paper lines and colors print as shown. */
@@ -230,6 +223,25 @@ fieldset{border:0;padding:0;margin:0}
   .btn.browse{display:inline-block}
   .detail{grid-template-columns:minmax(0,1fr);gap:24px}
 }
+
+/* ===== Atomic Diner look: cherry red and mint, a black-and-white checkerboard strip, starbursts, bold outlined buttons ===== */
+body{background:var(--bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cg stroke-linecap='round' stroke-width='2.2' fill='none'%3E%3Cg stroke='%2387CFC0' transform='translate(40 50)'%3E%3Cpath d='M0-14V14M-14 0H14M-10-10L10 10M10-10L-10 10'/%3E%3C/g%3E%3Cg stroke='%23E7A0A3' transform='translate(160 150) scale(.7)'%3E%3Cpath d='M0-14V14M-14 0H14M-10-10L10 10M10-10L-10 10'/%3E%3C/g%3E%3Cellipse cx='150' cy='45' rx='26' ry='9' stroke='%2387CFC0' transform='rotate(-25 150 45)'/%3E%3Ccircle cx='150' cy='45' r='3' fill='%23E7A0A3' stroke='none'/%3E%3C/g%3E%3C/svg%3E") 0 0/220px 220px}
+.top{background:var(--mint)}
+.top::after{height:16px;border-top:3px solid var(--chrome);background:conic-gradient(var(--chrome) 25%,#fff 0 50%,var(--chrome) 0 75%,#fff 0) 0 0/16px 16px}
+.brand b{font:400 36px/1 'Yellowtail',cursive;color:var(--accent)}
+.brand .bt span{color:var(--chrome)}
+.btn{border-radius:999px;border:2px solid var(--chrome);font-weight:600}
+.btn.primary{box-shadow:3px 3px 0 var(--chrome)}
+.search input{border:2px solid var(--chrome);border-radius:999px}
+.tree{border:2px solid var(--chrome);border-top:8px solid var(--accent);border-radius:14px;box-shadow:5px 5px 0 var(--chrome)}
+.tree h2{font:400 22px/1.2 'Yellowtail',cursive}
+.chip{border:2px solid var(--chrome)}
+.chip[aria-pressed=true]{background:var(--accent);border-color:var(--chrome);color:#fff}
+.head h1{font-size:34px}
+.box{border:2px solid var(--chrome);border-radius:14px}
+.thanks .tb{border:2px solid var(--chrome);border-top:8px solid var(--accent);border-radius:16px}
+.thanks h2{font:400 40px/1.1 'Yellowtail',cursive}
+.mbox{border:2px solid var(--chrome);border-radius:16px}
 </style>
 </head>
 <body>
