@@ -97,7 +97,7 @@ button{cursor:pointer}
 .ln small{font-size:.75em;margin-left:.4em}
 .ln.t{font-size:calc(7cqw*var(--fs,1))}
 .index .sheet{padding:2.4cqw 4cqw 0 6cqw;
-  background:linear-gradient(#DE9A9A,#DE9A9A) 0 8.3cqw/100% .3cqw no-repeat,
+  background:linear-gradient(#D06B72,#D06B72) 0 8.3cqw/100% .55cqw no-repeat,
   repeating-linear-gradient(to bottom,transparent 0 5.9cqw,#B9CFE4 5.9cqw 6.2cqw) 0 8.6cqw/100% 100% no-repeat}
 .index .ln.t{height:6.2cqw}
 .notebook{background:#FDFDF8}
@@ -242,6 +242,10 @@ body{background:var(--bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.or
 .thanks .tb{border:2px solid var(--chrome);border-top:8px solid var(--accent);border-radius:16px}
 .thanks h2{font:400 40px/1.1 'Yellowtail',cursive}
 .mbox{border:2px solid var(--chrome);border-radius:16px}
+
+/* Card headers: a crisper, darker recipe name and cherry-red section labels */
+.paper .ln.t{-webkit-text-stroke:.03em currentColor;paint-order:stroke fill;filter:brightness(.8) saturate(1.2)}
+.paper .lbl{font-weight:inherit;color:#B3262C;-webkit-text-stroke:.025em currentColor;text-decoration:underline;text-decoration-thickness:.07em;text-underline-offset:.14em}
 </style>
 </head>
 <body>
@@ -396,11 +400,11 @@ const face=r=>{const t=tilt(r),inner=r.img&&hasWords(r)?paper(styled(r)):paper(r
 function handR(r,o){
   const d=(o.en&&r.en)?r.en:r,clean=s=>String(s).replace(/\{\?([^}]+)\}/g,'$1');
   const wrap=(s,n)=>{const out=[];let cur='';clean(s).split(' ').forEach(w=>{if((cur+' '+w).trim().length>n){out.push(cur);cur=w}else cur=(cur+' '+w).trim()});if(cur)out.push(cur);return out};
-  const L=[esc(r.title),'Ingredients:'];
+  const L=[esc(r.title),'<b class="lbl">Ingredients:</b>'];
   d.ingredients.forEach(i=>wrap(i,30).forEach((l,k)=>L.push((k?'  ':'&ndash; ')+esc(l))));
-  L.push('Directions:');
+  L.push('<b class="lbl">Directions:</b>');
   if(d.method)wrap(d.method,30).forEach(l=>L.push(esc(l)));else L.push('(none written)');
-  if(o.sug&&r.suggest){L.push('Suggested:');
+  if(o.sug&&r.suggest){L.push('<b class="lbl">Suggested:</b>');
     if(r.suggest.steps)r.suggest.steps.forEach((t,n)=>wrap((n+1)+'. '+t,30).forEach((l,k)=>L.push((k?'  ':'')+esc(l))));
     else wrap(r.suggest.note,30).forEach(l=>L.push(esc(l)))}
   return {paper:'notebook',font:'Caveat',fs:1.15,ink:'#1d2b57',title:r.title,lines:L,h:Math.round(L.length*6.4+9.6)};
