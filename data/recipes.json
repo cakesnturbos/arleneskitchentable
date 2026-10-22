@@ -1,5 +1,32 @@
 [
   {
+    "id": "mvjptae5-293d8b4b",
+    "title": "Classic Pumpkin Pie",
+    "by": "Jennifer Schlueter",
+    "where": "Akron",
+    "year": 2010,
+    "ingredients": [
+      "1 unbaked 9in pie crust",
+      "15oz pumpkin puree",
+      "12oz evaporated milk",
+      "3/4 cup brown sugar",
+      "2 large eggs",
+      "1 tsp cinnamon",
+      "1/2 tsp salt",
+      "1/2 tsp ginger",
+      "1/4 tsp cloves"
+    ],
+    "method": "Line 9in pie pan with unbaked crust dough. Combine all ingredients till smooth, pour mix into pan.  Bake at 425 for 15 minutes, then 350 for 40-50min.",
+    "cats": [
+      "pies",
+      "thanksgiving",
+      "christmas"
+    ],
+    "manual": true,
+    "image": null,
+    "approved": "2026-10-22T19:51:27.546Z"
+  },
+  {
     "id": "mvh076nk-62e15e6f",
     "title": "Sweet Potato Casserole",
     "by": "Chicken Grandma",
