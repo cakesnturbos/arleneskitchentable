@@ -1,5 +1,26 @@
 [
   {
+    "id": "mvo51na9-ae2ebfb8",
+    "title": "Pasta",
+    "by": "Grandma Fratianne",
+    "where": "Cleveland",
+    "year": 1930,
+    "ingredients": [
+      "4 Eggs",
+      "3 Cup flour"
+    ],
+    "method": "Form a deep well in the center of flour. Whisk eggs together with a fork, slowly pulling in flour from the inner walls of the well.",
+    "cats": [
+      "noodles",
+      "thanksgiving",
+      "christmas",
+      "italian"
+    ],
+    "manual": true,
+    "image": null,
+    "approved": "2026-10-25T18:21:11.604Z"
+  },
+  {
     "id": "mvjptae5-293d8b4b",
     "title": "Classic Pumpkin Pie",
     "by": "Jennifer Schlueter",
