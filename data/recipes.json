@@ -1,5 +1,34 @@
 [
   {
+    "id": "mvo4uzxk-a05046e3",
+    "title": "Marlene's Taco Salad",
+    "by": "Marlene",
+    "where": "Mentor",
+    "year": 1990,
+    "ingredients": [
+      "Layer:",
+      "Refried beans",
+      "Sour cream",
+      "Scallions",
+      "Diced tomatos",
+      "Bacon bits",
+      "Lettuce",
+      "Cheddar Cheese",
+      "Ortega taco sauce",
+      "Olives"
+    ],
+    "method": "Layer ingredients, serve with round taco chips",
+    "cats": [
+      "lunch",
+      "dinner",
+      "nobake",
+      "mexican"
+    ],
+    "manual": true,
+    "image": null,
+    "approved": "2026-10-25T18:22:32.033Z"
+  },
+  {
     "id": "mvo4hvu4-3353ac62",
     "title": "Standard pie crust",
     "by": "Grandma Fratianne",
