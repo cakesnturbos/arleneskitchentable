@@ -10,7 +10,7 @@
 //   TURNSTILE_SECRET SECRET  (optional) Cloudflare Turnstile secret key
 
 const CATS = new Set(['breakfast','lunch','dinner','cakes','cookies','pies','puddings','breads',
-  'thanksgiving','christmas','german','italian','mexican','polish','dogtreats','casseroles']);
+  'thanksgiving','christmas','german','italian','mexican','polish','dogtreats','casseroles','nobake']);
 
 const utf8ToB64 = s => btoa(unescape(encodeURIComponent(s)));
 const clip = (v, max) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
