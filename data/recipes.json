@@ -1,5 +1,30 @@
 [
   {
+    "id": "mvo4mu18-0ce22107",
+    "title": "Pizzelles",
+    "by": "Grandma Fratianne",
+    "where": "Cleveland",
+    "year": 1940,
+    "ingredients": [
+      "6 eggs",
+      "3-1/2 cup flour",
+      "1-1/2 cup sugar",
+      "1 cup butter",
+      "4 teaspoon baking powder",
+      "2 Tablespoon vanilla"
+    ],
+    "method": "Beat eggs, add sugar, blend.  Add cooled butter and vanilla.  Add dry ingredients and blend together. Use Pizzelle press.",
+    "cats": [
+      "cookies",
+      "thanksgiving",
+      "christmas",
+      "italian"
+    ],
+    "manual": true,
+    "image": null,
+    "approved": "2026-10-25T18:21:32.720Z"
+  },
+  {
     "id": "mvo51na9-ae2ebfb8",
     "title": "Pasta",
     "by": "Grandma Fratianne",
