@@ -27,9 +27,9 @@
   {
     "id": "mvz9fwh2-d7a6eee5",
     "title": "Coffee Cake",
-    "by": "",
-    "where": "",
-    "year": null,
+    "by": "Jennifer",
+    "where": "Akron",
+    "year": 2010,
     "ingredients": [
       "Cinnamon Crumb Mixture",
       "2/3 Cup Brown sugar",
@@ -50,9 +50,7 @@
     ],
     "method": "Mix crumb mixture in bowl, set aside. \nMix dry ingredients to another bowl, combine. \nCream together butter and sugar, beat in eggs one at a time, add vanilla till combined.  Add sour cream and milk/coffee.  Gradually add dry to wet till just combined, batter will have lumps. \n\nGreased 8x8 pan, layer half the cake mix, sprinkle half the crumble, remaining cake, remaining crumble.  Bake at 350 degrees for 45-50 minutes.",
     "cats": [
-      "cakes",
-      "thanksgiving",
-      "christmas"
+      "cakes"
     ],
     "manual": true,
     "image": null,
